@@ -110,6 +110,9 @@ export async function runInfraAgent(
     },
   ];
 
+  // Same validation-retry loop as the analyzer, but simpler: the model's
+  // ONLY move is emit_proposal (tool_choice forces it). Invalid proposals
+  // come back as errors it must fix; a clean one ends the loop.
   for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     const started = Date.now();
     const completion = await openai.chat.completions.create({

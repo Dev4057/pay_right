@@ -55,6 +55,7 @@ export class RepoTools {
     return abs;
   }
 
+  /** Recursively yields every file path, skipping node_modules/.git/etc. */
   private *walk(dir: string): Generator<string> {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.isDirectory()) {

@@ -219,6 +219,11 @@ export async function runAnalyzer(
     });
   };
 
+  // Called when the model submits its final report. If anything is wrong we
+  // do NOT fail the run — we return the errors as the tool result, and the
+  // model fixes and re-submits ("validation-retry"). Only a fully valid
+  // report (right shape, computed load class copied verbatim, every asked
+  // question answered) ends the loop.
   const handleEmitReport = (reportRaw: unknown): { done: boolean; reply: string } => {
     if (!interviewDone || !loadEstimate) {
       return { done: false, reply: "ERROR: run ask_user before emitting the report." };
@@ -254,6 +259,10 @@ export async function runAnalyzer(
     return { done: true, reply: JSON.stringify(report) };
   };
 
+  // The agent loop. Each pass: send the conversation to the model, run
+  // whatever tools it asked for, append the results, repeat — until it
+  // calls emit_report with a report that survives validation, or we hit
+  // the iteration cap (so a confused model can never loop forever).
   let consecutiveNoTool = 0;
   for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     const started = Date.now();

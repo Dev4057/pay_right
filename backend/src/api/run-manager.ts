@@ -194,7 +194,11 @@ async function drive(run: Run): Promise<void> {
     touch(run, "exploring");
   }
 
-  // 1. Analyzer (suspends in ask_user until answers arrive)
+  // 1. Analyzer. The trick that makes the interview work over HTTP: when the
+  //    agent calls ask_user, we park the run in "awaiting_answers" and return
+  //    a promise that stays unresolved. The whole pipeline simply waits here
+  //    — until the POST /answers endpoint calls the stored resolver, which
+  //    wakes this exact spot up with the user's answers.
   const { report } = await runAnalyzer(
     localPath,
     run.repo_name,
@@ -229,7 +233,10 @@ async function drive(run: Run): Promise<void> {
     `proposal: ${proposal.recommended.provider} ${proposal.recommended.plan} $${proposal.recommended.price}/${proposal.recommended.billing_cycle}`
   );
 
-  // 3. Decision — human in approval mode, system-minted in autonomy mode.
+  // 3. Decision — same suspend-and-wait trick as the interview: in approval
+  //    mode the run parks in "awaiting_decision" until POST /decision fires.
+  //    In autonomy mode no human is asked — but a decision object is still
+  //    minted, because the executor refuses to run without one.
   let decision: ApprovalDecision;
   if (run.mode === "approval") {
     touch(run, "awaiting_decision");
