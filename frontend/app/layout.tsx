@@ -29,6 +29,7 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body
         className={`${spaceGrotesk.variable} ${ibmPlexMono.variable} h-full bg-[#0A0A0A] overflow-x-hidden`}
+        suppressHydrationWarning
       >
         {children}
       </body>

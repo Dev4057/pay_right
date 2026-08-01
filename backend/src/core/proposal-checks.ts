@@ -7,7 +7,37 @@
  */
 import type { PurchaseProposal, RequirementsReport } from "./contract.js";
 import { citedFindingsExist } from "./contract.js";
-import { findPlan, type Catalog } from "./catalog.js";
+import { findPlan, type Catalog, type CatalogPlan } from "./catalog.js";
+
+/**
+ * Deterministic plan eligibility — the requirements a plan must satisfy are
+ * computed from the report's structured findings, not from LLM judgment:
+ *   shape: websockets/file storage/postgres needs map to catalog spec flags
+ *   size:  load class L may never land on an entry tier
+ */
+export function eligiblePlans(report: RequirementsReport, catalog: Catalog): CatalogPlan[] {
+  const needs = new Set(report.special_needs.map((f) => f.value.need));
+  const requiresWebsockets = needs.has("websockets");
+  const requiresDisk = needs.has("file-uploads") || needs.has("file-storage");
+  const requiresPostgres = report.database.value.type === "postgres";
+  const loadClass = report.load_class.value;
+
+  return catalog.plans.filter((p) => {
+    if (requiresWebsockets && !p.specs.websockets) return false;
+    if (requiresDisk && !p.specs.persistent_disk) return false;
+    if (requiresPostgres && !p.specs.managed_postgres) return false;
+    if (loadClass === "L" && p.tier === "entry") return false;
+    if (loadClass === "M" && p.tier === "entry" && p.specs.autoscaling === "none") return false;
+    return true;
+  });
+}
+
+export function cheapestEligible(report: RequirementsReport, catalog: Catalog): CatalogPlan[] {
+  const eligible = eligiblePlans(report, catalog);
+  if (eligible.length === 0) return [];
+  const min = Math.min(...eligible.map((p) => Number(p.price)));
+  return eligible.filter((p) => Number(p.price) === min);
+}
 
 export interface ProposalExpectations {
   proposal_id: string;
@@ -74,6 +104,34 @@ export function checkProposal(
   const trace = citedFindingsExist(proposal, report);
   if (!trace.ok) {
     errors.push(`reasoning cites unknown finding ids: ${trace.missing.join(", ")}`);
+  }
+
+  // Deterministic fit + price optimality: the recommendation must be an
+  // eligible plan (shape + size) AND the cheapest among eligible plans.
+  const eligible = eligiblePlans(report, catalog);
+  if (eligible.length > 0 && rec) {
+    const recEligible = eligible.some(
+      (p) => p.provider === rec.provider && p.plan === rec.plan
+    );
+    if (!recEligible) {
+      errors.push(
+        `recommended "${rec.provider} ${rec.plan}" does not satisfy the report's requirements ` +
+          `(shape/size). Eligible plans: ${eligible.map((p) => `${p.provider} ${p.plan}`).join(", ")}`
+      );
+    } else {
+      const cheapest = cheapestEligible(report, catalog);
+      const isCheapest = cheapest.some(
+        (p) => p.provider === rec.provider && p.plan === rec.plan
+      );
+      if (!isCheapest) {
+        errors.push(
+          `recommended "${rec.provider} ${rec.plan}" ($${rec.price}) is not the cheapest plan ` +
+            `satisfying all requirements — cheapest eligible: ${cheapest
+              .map((p) => `${p.provider} ${p.plan} ($${p.price})`)
+              .join(" or ")}. Recommend one of those instead.`
+        );
+      }
+    }
   }
 
   return errors;

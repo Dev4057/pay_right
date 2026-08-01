@@ -37,11 +37,18 @@ Your job: pick the best-fit plan and produce a purchase proposal.
 DECISION PRINCIPLES:
 - Code findings decide the plan's SHAPE (websockets need an always-on process; Postgres in code
   strongly favors a platform with managed Postgres; local-disk uploads care about persistent disks).
-- The load_class decides the SIZE: buy for the expected case, not the dream case.
-  XS/S -> smallest tier that satisfies the shape. M -> mid tier or autoscaling-ready. L -> elasticity mandatory.
+- The load_class decides the SIZE — this is a hard ladder, not a suggestion:
+  XS/S -> smallest tier that satisfies the shape.
+  M    -> a mid tier, or a small tier ONLY if it has real autoscaling headroom.
+  L    -> a higher/pro tier with priority resources or paid autoscaling is REQUIRED.
+          NEVER recommend the entry-level tier for L, even if its raw specs technically fit:
+          sustained L-class traffic exhausts entry-tier included usage, support priority, and
+          burst headroom. Under-provisioning at L is exactly the failure this product prevents.
 - Where load is uncertain, prefer elastic/scalable plans over fixed-capacity ones.
-- Cheaper wins when two plans satisfy the same requirements — overpaying is a failure mode
-  this product exists to prevent.
+- PRICE RULE: among plans that satisfy every requirement at the required size, you MUST
+  recommend the cheapest. Recommending a costlier plan is only allowed if every cheaper
+  candidate fails a NAMED requirement — and that failure must be stated in its why_rejected.
+  Overpaying is a failure mode this product exists to prevent.
 
 HARD RULES:
 - Recommend ONLY plans from the catalog, with their EXACT price, billing_cycle and checkout_url.
@@ -73,11 +80,16 @@ const TOOLS: ChatCompletionTool[] = [
 export async function runInfraAgent(
   report: RequirementsReport,
   mode: "approval" | "autonomy",
-  proposalId: string
+  proposalId: string,
+  onProgress?: (line: string) => void
 ): Promise<InfraResult> {
   const openai = makeClient();
   const catalog = loadCatalog();
-  const log = (msg: string) => agentLog("infra", report.meta.repo_name, msg);
+  const log = (msg: string) => {
+    agentLog("infra", report.meta.repo_name, msg);
+    onProgress?.(msg);
+  };
+  log(`comparing ${catalog.plans.length} catalog plans against ${Object.keys(report).length - 1} report sections`);
 
   const expected: ProposalExpectations = {
     proposal_id: proposalId,

@@ -76,20 +76,41 @@ export const ReportFlag = z.object({
   related_finding_ids: z.array(z.string()),
 });
 
-export const RequirementsReport = z.object({
-  meta: z.object({
-    repo_name: z.string(),
-    target: z.literal("nodejs"),
-    analyzer_version: z.string(),
-  }),
-  runtime: finding(z.string().describe('e.g. "node-20"')),
-  database: finding(DatabaseInfo),
-  concurrency: finding(ConcurrencyClass),
-  special_needs: z.array(finding(SpecialNeed)),
-  load_class: finding(LoadClass),
-  interview_answers: z.array(InterviewAnswer),
-  flags: z.array(ReportFlag),
-});
+export const RequirementsReport = z
+  .object({
+    meta: z.object({
+      repo_name: z.string(),
+      target: z.literal("nodejs"),
+      analyzer_version: z.string(),
+    }),
+    runtime: finding(z.string().describe('e.g. "node-20"')),
+    database: finding(DatabaseInfo),
+    concurrency: finding(ConcurrencyClass),
+    special_needs: z.array(finding(SpecialNeed)),
+    load_class: finding(LoadClass),
+    interview_answers: z.array(InterviewAnswer),
+    flags: z.array(ReportFlag),
+  })
+  .superRefine((r, ctx) => {
+    // Finding ids must be unique across the WHOLE report — they are the
+    // paper-trail anchors cited by proposals, rules, and the UI.
+    const ids = [
+      r.runtime.id,
+      r.database.id,
+      r.concurrency.id,
+      r.load_class.id,
+      ...r.special_needs.map((f) => f.id),
+    ];
+    const seen = new Set<string>();
+    const dupes = new Set<string>();
+    for (const id of ids) (seen.has(id) ? dupes : seen).add(id);
+    if (dupes.size > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `duplicate finding ids: ${[...dupes].join(", ")} — every finding needs a unique id (F1, F2, ...)`,
+      });
+    }
+  });
 export type RequirementsReport = z.infer<typeof RequirementsReport>;
 
 /* ------------------------------------------------------------------ */

@@ -13,8 +13,11 @@
  * In-memory store — deliberate hackathon scope (single process, demo runs).
  */
 import { randomUUID } from "node:crypto";
-import { basename, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type {
   ApprovalDecision,
   PurchaseProposal,
@@ -28,6 +31,7 @@ import { runInfraAgent } from "../agents/infra.js";
 import { executePurchase } from "../payments/executor.js";
 
 export type RunState =
+  | "cloning"
   | "exploring"
   | "awaiting_answers"
   | "analyzing"
@@ -57,6 +61,8 @@ interface Run {
   receipt: TransactionReceipt | null;
   payment_url: string | null;
   error: string | null;
+  /** Live agent activity feed ("the code rail") — newest last, capped. */
+  activity: string[];
   /** Internal deferred resolvers — never serialized to clients. */
   _resolveAnswers: ((answers: Record<string, string>) => void) | null;
   _resolveDecision: ((decision: ApprovalDecision) => void) | null;
@@ -69,9 +75,29 @@ const runs = new Map<string, Run>();
 
 const USER = { id: "pay_right_dev_001", email: "sn@blokcapital.io" };
 
+const execFileAsync = promisify(execFile);
+
+/** Relative repo paths resolve against the PROJECT root (pay_right/), not backend/. */
+const PROJECT_ROOT = resolve(process.cwd(), "..");
+
+const GITHUB_URL_RE = /^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+?(?:\.git)?\/?$/i;
+
+export function isGithubUrl(input: string): boolean {
+  return GITHUB_URL_RE.test(input.trim());
+}
+
 function touch(run: Run, state?: RunState): void {
   if (state) run.state = state;
   run.updated_at = new Date().toISOString();
+}
+
+const MAX_ACTIVITY_LINES = 300;
+
+/** Append a line to the run's live activity feed (UTC HH:MM:SS prefix). */
+function act(run: Run, line: string): void {
+  run.activity.push(`${new Date().toISOString().slice(11, 19)}  ${line}`);
+  if (run.activity.length > MAX_ACTIVITY_LINES) run.activity.shift();
+  touch(run);
 }
 
 export function toView(run: Run): RunView {
@@ -90,17 +116,39 @@ export function listRuns(): RunView[] {
 }
 
 export function startRun(repoPathRaw: string, mode: RunMode): RunView {
-  const repo_path = resolve(repoPathRaw);
-  const st = statSync(repo_path, { throwIfNoEntry: false });
-  if (!st?.isDirectory()) throw new Error(`Repository path is not a directory: ${repo_path}`);
+  const input = repoPathRaw.trim();
+  let repo_path: string;
+  let repo_name: string;
+  let initialState: RunState;
+
+  if (isGithubUrl(input)) {
+    // Public GitHub repo — cloned by drive() before analysis.
+    repo_path = input.replace(/\/+$/, "");
+    repo_name = repo_path.split("/").pop()!.replace(/\.git$/, "");
+    initialState = "cloning";
+  } else {
+    // Local folder — relative paths resolve against the project root,
+    // so "demo-repo" works no matter where the server was started from.
+    repo_path = resolve(PROJECT_ROOT, input);
+    const st = statSync(repo_path, { throwIfNoEntry: false });
+    if (!st?.isDirectory()) {
+      throw new Error(
+        `Repository path is not a directory: ${repo_path}. ` +
+          `Use an absolute path, a path relative to the project root (e.g. "demo-repo"), ` +
+          `or a public GitHub URL (https://github.com/owner/repo).`
+      );
+    }
+    repo_name = basename(repo_path);
+    initialState = "exploring";
+  }
 
   const now = new Date().toISOString();
   const run: Run = {
     id: `run_${randomUUID().slice(0, 8)}`,
-    state: "exploring",
+    state: initialState,
     mode,
     repo_path,
-    repo_name: basename(repo_path),
+    repo_name,
     created_at: now,
     updated_at: now,
     questions: null,
@@ -111,10 +159,12 @@ export function startRun(repoPathRaw: string, mode: RunMode): RunView {
     receipt: null,
     payment_url: null,
     error: null,
+    activity: [],
     _resolveAnswers: null,
     _resolveDecision: null,
   };
   runs.set(run.id, run);
+  act(run, initialState === "cloning" ? `cloning ${repo_path} ...` : `analyzer started on ${repo_name}/`);
 
   void drive(run).catch((e) => {
     run.error = (e as Error).message;
@@ -126,25 +176,58 @@ export function startRun(repoPathRaw: string, mode: RunMode): RunView {
 
 /** The whole pipeline for one run, suspending where humans are needed. */
 async function drive(run: Run): Promise<void> {
+  // 0. GitHub URL? Shallow-clone it first (public repos only).
+  let localPath = run.repo_path;
+  if (isGithubUrl(run.repo_path)) {
+    const dest = join(tmpdir(), "pay_right_clones", `${run.repo_name}-${run.id}`);
+    try {
+      await execFileAsync("git", ["clone", "--depth", "1", run.repo_path, dest], {
+        timeout: 90_000,
+      });
+    } catch (e) {
+      throw new Error(
+        `Could not clone ${run.repo_path} — is it a public repository? (${(e as Error).message})`
+      );
+    }
+    localPath = dest;
+    act(run, `clone complete -> analyzing ${run.repo_name}/`);
+    touch(run, "exploring");
+  }
+
   // 1. Analyzer (suspends in ask_user until answers arrive)
-  const { report } = await runAnalyzer(run.repo_path, run.repo_name, async (questions) => {
-    run.questions = questions;
-    touch(run, "awaiting_answers");
-    return new Promise<Record<string, string>>((res) => {
-      run._resolveAnswers = (answers) => {
-        run._resolveAnswers = null;
-        touch(run, "analyzing");
-        res(answers);
-      };
-    });
-  });
+  const { report } = await runAnalyzer(
+    localPath,
+    run.repo_name,
+    async (questions) => {
+      run.questions = questions;
+      act(run, `load interview: ${questions.length} questions for the founder`);
+      touch(run, "awaiting_answers");
+      return new Promise<Record<string, string>>((res) => {
+        run._resolveAnswers = (answers) => {
+          run._resolveAnswers = null;
+          act(run, "answers received -> computing load class (deterministic)");
+          touch(run, "analyzing");
+          res(answers);
+        };
+      });
+    },
+    (line) => act(run, line)
+  );
   run.report = report;
+  act(
+    run,
+    `report ready: ${report.special_needs.length + 4} findings, load class ${report.load_class.value}, ${report.flags.length} flag(s)`
+  );
 
   // 2. Infra Agent
   touch(run, "proposing");
   const proposalId = `prop_${randomUUID().slice(0, 8)}`;
-  const { proposal } = await runInfraAgent(report, run.mode, proposalId);
+  const { proposal } = await runInfraAgent(report, run.mode, proposalId, (line) => act(run, line));
   run.proposal = proposal;
+  act(
+    run,
+    `proposal: ${proposal.recommended.provider} ${proposal.recommended.plan} $${proposal.recommended.price}/${proposal.recommended.billing_cycle}`
+  );
 
   // 3. Decision — human in approval mode, system-minted in autonomy mode.
   let decision: ApprovalDecision;
@@ -183,6 +266,7 @@ async function drive(run: Run): Promise<void> {
 
   // 4. Rules layer + Prava
   touch(run, "executing");
+  act(run, "running rules layer: spend-ceiling, price-match, category-lock, traceability");
   const outcome = await executePurchase({
     report,
     proposal,
@@ -190,11 +274,19 @@ async function drive(run: Run): Promise<void> {
     user: USER,
     onPaymentUrl: (url) => {
       run.payment_url = url;
+      act(run, "Prava session created — waiting for card + passkey approval");
       touch(run);
     },
   });
   run.rules = outcome.rules;
   run.receipt = outcome.receipt;
+  const failed = outcome.rules.checks.filter((c) => !c.passed);
+  act(
+    run,
+    failed.length === 0
+      ? `rules: 4/4 passed -> ${outcome.receipt.status}`
+      : `rules: BLOCKED at ${failed[0]!.rule} -> HALTED`
+  );
   touch(run, outcome.receipt.status === "APPROVED" ? "completed" : "halted");
 }
 
