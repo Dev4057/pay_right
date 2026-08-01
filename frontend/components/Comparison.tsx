@@ -36,7 +36,7 @@ export default function Comparison() {
             <span className="font-grotesk text-[11px] font-bold text-[#888888] tracking-[2px]">FEATURE</span>
           </div>
           <div className="flex items-center flex-1 px-[32px] bg-[#1A1A1A] border-r border-r-[#2D2D2D]">
-            <span className="font-grotesk text-[11px] font-bold text-[#FFD600] tracking-[2px]">US (PRAVA AGENT)</span>
+            <span className="font-grotesk text-[11px] font-bold text-[#FFD600] tracking-[2px]">US (PAY RIGHT)</span>
           </div>
           {["VANTAGE", "TERRAFORM", "ADVISORS"].map((tool, i) => (
             <div key={tool} className={`flex items-center flex-1 px-[32px] ${i < 2 ? "border-r border-r-[#2D2D2D]" : ""}`}>

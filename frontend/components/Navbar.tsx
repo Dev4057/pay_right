@@ -61,7 +61,7 @@ export default function Navbar() {
         <a href="#" className="flex items-center gap-[10px] shrink-0 group">
           <span className="w-[10px] h-[10px] bg-[#FFD600] group-hover:scale-110 transition-transform" />
           <span className="font-grotesk text-[13px] font-bold text-[#F5F5F0] tracking-[2.5px]">
-            PRAVA AGENT
+            PAY RIGHT
           </span>
         </a>
 
