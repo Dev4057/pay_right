@@ -13,7 +13,7 @@ export default function Hero() {
       <div className="flex items-center justify-center gap-[8px] h-[32px] px-[12px] md:px-[16px] bg-[#1A1A1A] border-2 border-[#FFD600]">
         <div className="w-[8px] h-[8px] bg-[#FFD600] shrink-0" />
         <span className="font-ibm-mono text-[9px] md:text-[11px] font-bold text-[#FFD600] tracking-[1px] md:tracking-[2px] whitespace-nowrap">
-          [BETA] // PRAVA AGENT LIVE
+          [BETA] // PAY RIGHT LIVE
         </span>
       </div>
 
