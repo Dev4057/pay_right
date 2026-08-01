@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "repo_name": "demo-chat-app",
+    "target": "nodejs",
+    "analyzer_version": "0.1.0"
+  },
+  "runtime": {
+    "id": "F1",
+    "value": "node-20",
+    "confidence": "derived-from-code",
+    "evidence": "package.json:5 engines.node \">=20\""
+  },
+  "database": {
+    "id": "F2",
+    "value": {
+      "type": "postgres",
+      "shape": "relational",
+      "workload": "balanced"
+    },
+    "confidence": "derived-from-code",
+    "evidence": "pg@8.11 in package.json:14; migrations/ folder with 6 SQL files"
+  },
+  "concurrency": {
+    "id": "F3",
+    "value": "io-bound-stateful",
+    "confidence": "inferred",
+    "evidence": "Express REST routes + socket.io keeps per-connection state; no CPU-heavy libs found"
+  },
+  "special_needs": [
+    {
+      "id": "F4",
+      "value": {
+        "need": "websockets",
+        "detail": "socket.io realtime chat rooms"
+      },
+      "confidence": "derived-from-code",
+      "evidence": "socket.io@4 in package.json:16; io.on('connection') in server.js:12"
+    },
+    {
+      "id": "F5",
+      "value": {
+        "need": "file-uploads",
+        "detail": "multer used for avatar image uploads"
+      },
+      "confidence": "derived-from-code",
+      "evidence": "multer in package.json:17; upload.single('avatar') in routes/profile.js:9"
+    }
+  ],
+  "load_class": {
+    "id": "F6",
+    "value": "S",
+    "confidence": "user-provided",
+    "evidence": "interview Q2: 100-1K users in first 3 months; Q6: quiet rollout, no launch spike"
+  },
+  "interview_answers": [
+    {
+      "q_id": "Q1",
+      "question": "Who is this app for?",
+      "answer": "B2C public"
+    },
+    {
+      "q_id": "Q2",
+      "question": "How many users do you expect in the first 3 months?",
+      "answer": "100-1K"
+    },
+    {
+      "q_id": "Q3",
+      "question": "How many people will be connected live at the same moment?",
+      "answer": "About a classroom of 100"
+    },
+    {
+      "q_id": "Q6",
+      "question": "Any launch moment planned?",
+      "answer": "Quiet rollout"
+    }
+  ],
+  "flags": [
+    {
+      "severity": "info",
+      "message": "Uploaded avatars are stored on local disk (uploads/); most hosting tiers have ephemeral disks — object storage may be needed later.",
+      "related_finding_ids": ["F5"]
+    }
+  ]
+}

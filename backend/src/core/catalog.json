@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "category": "hosting",
+    "currency": "USD",
+    "verified_at": "2026-08-01",
+    "note": "Hand-curated from provider pricing pages. Re-verify prices before the demo purchase — the price-match rule will block any drift."
+  },
+  "plans": [
+    {
+      "provider": "Railway",
+      "plan": "Hobby",
+      "price": "5.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://railway.app/pricing",
+      "specs": {
+        "ram_gb": 8,
+        "vcpu": 8,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": true,
+        "autoscaling": "vertical-within-limits",
+        "persistent_disk": true
+      },
+      "notes": "Includes $5/mo usage credit; resources up to 8GB/8vCPU per service; Postgres runs as a service on the same platform (usage-based)."
+    },
+    {
+      "provider": "Railway",
+      "plan": "Pro",
+      "price": "20.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://railway.app/pricing",
+      "specs": {
+        "ram_gb": 32,
+        "vcpu": 32,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": true,
+        "autoscaling": "vertical-within-limits",
+        "persistent_disk": true
+      },
+      "notes": "Higher resource ceilings and priority support; for teams beyond early launch."
+    },
+    {
+      "provider": "Render",
+      "plan": "Starter",
+      "price": "7.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://render.com/pricing",
+      "specs": {
+        "ram_gb": 0.5,
+        "vcpu": 0.5,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": true,
+        "autoscaling": "none",
+        "persistent_disk": false
+      },
+      "notes": "512MB instance; managed Postgres is a separate paid instance (free tier expires after 30 days); persistent disks cost extra."
+    },
+    {
+      "provider": "Render",
+      "plan": "Standard",
+      "price": "25.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://render.com/pricing",
+      "specs": {
+        "ram_gb": 2,
+        "vcpu": 1,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": true,
+        "autoscaling": "horizontal-paid",
+        "persistent_disk": false
+      },
+      "notes": "2GB instance; autoscaling available; Postgres still a separate paid instance."
+    },
+    {
+      "provider": "DigitalOcean",
+      "plan": "App Platform Basic",
+      "price": "5.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://www.digitalocean.com/pricing/app-platform",
+      "specs": {
+        "ram_gb": 0.5,
+        "vcpu": 1,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": false,
+        "autoscaling": "none",
+        "persistent_disk": false
+      },
+      "notes": "512MB container; managed Postgres is a separate product from $15/mo; fixed capacity, no autoscaling on Basic."
+    },
+    {
+      "provider": "DigitalOcean",
+      "plan": "Basic Droplet 1GB",
+      "price": "6.00",
+      "billing_cycle": "monthly",
+      "checkout_url": "https://www.digitalocean.com/pricing/droplets",
+      "specs": {
+        "ram_gb": 1,
+        "vcpu": 1,
+        "always_on": true,
+        "websockets": true,
+        "managed_postgres": false,
+        "autoscaling": "none",
+        "persistent_disk": true
+      },
+      "notes": "Raw VPS — you manage OS, deploys, TLS, and the database yourself."
+    }
+  ]
+}

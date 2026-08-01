@@ -1,0 +1,20 @@
+{
+  "name": "quicktalk",
+  "version": "1.0.0",
+  "description": "Team chat app with rooms, avatars and message history",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node db/migrate.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.11.5",
+    "socket.io": "^4.7.5"
+  }
+}

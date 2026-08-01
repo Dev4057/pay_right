@@ -1,0 +1,32 @@
+{
+  "name": "pay-right-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pre-Deployment Infrastructure Fit Agent — backend (analyzer agent, infra agent, rules layer, Prava payments)",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/core/load-math.test.ts src/core/proposal-checks.test.ts src/core/rules.test.ts",
+    "validate:fixtures": "tsx src/scripts/validate-fixtures.ts",
+    "analyze": "tsx src/scripts/run-analyzer.ts",
+    "infra": "tsx src/scripts/run-infra.ts",
+    "purchase": "tsx src/scripts/run-purchase.ts",
+    "spike:prava": "tsx src/scripts/spike-session.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "openai": "^5.0.0",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

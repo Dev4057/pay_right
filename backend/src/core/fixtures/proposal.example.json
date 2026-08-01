@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "proposal_id": "prop_demo_001",
+    "repo_name": "demo-chat-app",
+    "category": "hosting",
+    "mode": "approval"
+  },
+  "recommended": {
+    "provider": "Railway",
+    "plan": "Hobby",
+    "price": "5.00",
+    "currency": "USD",
+    "billing_cycle": "monthly",
+    "checkout_url": "https://railway.app/pricing"
+  },
+  "reasoning": [
+    {
+      "reason": "Your app keeps live websocket connections open (socket.io chat) — it needs an always-on server process, not a serverless platform that kills idle connections.",
+      "finding_ids": ["F4", "F3"]
+    },
+    {
+      "reason": "You expect an early-launch audience (100-1K users, ~100 live at once) — the smallest always-on tier covers this comfortably; paying for more would be capacity you never use.",
+      "finding_ids": ["F6"]
+    },
+    {
+      "reason": "Postgres is required and this plan includes a managed Postgres add-on on the same platform, avoiding a second vendor for the database.",
+      "finding_ids": ["F2"]
+    }
+  ],
+  "alternatives": [
+    {
+      "provider": "Render",
+      "plan": "Starter",
+      "price": "7.00",
+      "why_rejected": "Also fits the websocket requirement, but costs more for the same class of instance and its free Postgres tier expires after 30 days."
+    },
+    {
+      "provider": "DigitalOcean",
+      "plan": "Basic Droplet 1GB",
+      "price": "6.00",
+      "why_rejected": "Raw VPS requires you to manage the OS, deploys, and Postgres yourself — unnecessary operational load for a pre-launch team."
+    }
+  ]
+}

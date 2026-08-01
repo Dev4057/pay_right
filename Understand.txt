@@ -1,0 +1,15 @@
+The load-bearing finding from the resources
+There's one thing you should know now, because it shapes the build: the merchant ecosystems in your resources don't contain hosting/DB/SaaS vendors.
+
+The Google Sheet (I read all ~75 rows) is travel MCPs, Claude connectors, and 50 Indian Shopify/UCP retail stores — boAt, Mamaearth, GIVA, etc.
+UCP Checker's ~16k storefronts are retail commerce (Allbirds, The Body Shop…).
+The e-commerce MCP servers are Shopify/WooCommerce store-operations tools — even the Hostinger one is for its e-commerce store API, not for buying hosting.
+Composio's gateway does list Vercel and Supabase MCPs, but those are for managing/provisioning services, not checkout.
+The good news: this isn't a blocker, because of how Prava actually works. Per its skills repo and site, Prava issues one-time tokenized Visa credentials (network token + dynamic CVV) — merchant-locked, amount-locked, minutes-long expiry, card never exposed to the AI. That means the agent can pay at any checkout that accepts cards, so the hosting/DB purchase goes through the provider's own checkout or billing API with a Prava-issued card — the UCP/MCP merchant lists are the hackathon's general commerce landscape, not our vendor pool. Picking which provider's checkout we wire end-to-end (Hostinger, DigitalOcean, Railway, Render, Supabase…) will be one of our first real decisions, and it's worth choosing by which checkout is most reliably automatable in 48 hours, not which provider is best-known.
+
+One more framing note: the hackathon runs July 31 – Aug 3 — it starts today, judges on transparent transaction handling and consequential agent action, and requires a real completed transaction through Prava. Your requirements-report-as-paper-trail design maps directly onto that criterion, which is a genuine strength.
+
+I'm ready. When you share the next documents, send them over — and when we start building, my first questions will be the two scoping picks your own doc calls for: which analyzer target (Node.js vs. Python) and which single purchase category/vendor we wire for real.
+
+Sources: Prava · Prava skills repo · Agentic Commerce Hackathon · Prava on Product Hunt
+
