@@ -12,7 +12,7 @@ export default function Footer() {
           <div className="flex items-center gap-[12px]">
             <div className="w-[32px] h-[32px] bg-[#FFD600] shrink-0" />
             <span className="font-grotesk text-[16px] font-bold text-[#FFD600] tracking-[3px]">
-              PRAVA AGENT
+              PAY RIGHT
             </span>
           </div>
           <p className="font-ibm-mono text-[11px] text-[#888888] tracking-[1px] leading-[1.6] max-w-[260px]">
