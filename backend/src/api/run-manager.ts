@@ -13,8 +13,11 @@
  * In-memory store — deliberate hackathon scope (single process, demo runs).
  */
 import { randomUUID } from "node:crypto";
-import { basename, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type {
   ApprovalDecision,
   PurchaseProposal,
@@ -28,6 +31,7 @@ import { runInfraAgent } from "../agents/infra.js";
 import { executePurchase } from "../payments/executor.js";
 
 export type RunState =
+  | "cloning"
   | "exploring"
   | "awaiting_answers"
   | "analyzing"
@@ -69,6 +73,17 @@ const runs = new Map<string, Run>();
 
 const USER = { id: "pay_right_dev_001", email: "sn@blokcapital.io" };
 
+const execFileAsync = promisify(execFile);
+
+/** Relative repo paths resolve against the PROJECT root (pay_right/), not backend/. */
+const PROJECT_ROOT = resolve(process.cwd(), "..");
+
+const GITHUB_URL_RE = /^https?:\/\/github\.com\/[\w.-]+\/[\w.-]+?(?:\.git)?\/?$/i;
+
+export function isGithubUrl(input: string): boolean {
+  return GITHUB_URL_RE.test(input.trim());
+}
+
 function touch(run: Run, state?: RunState): void {
   if (state) run.state = state;
   run.updated_at = new Date().toISOString();
@@ -90,17 +105,39 @@ export function listRuns(): RunView[] {
 }
 
 export function startRun(repoPathRaw: string, mode: RunMode): RunView {
-  const repo_path = resolve(repoPathRaw);
-  const st = statSync(repo_path, { throwIfNoEntry: false });
-  if (!st?.isDirectory()) throw new Error(`Repository path is not a directory: ${repo_path}`);
+  const input = repoPathRaw.trim();
+  let repo_path: string;
+  let repo_name: string;
+  let initialState: RunState;
+
+  if (isGithubUrl(input)) {
+    // Public GitHub repo — cloned by drive() before analysis.
+    repo_path = input.replace(/\/+$/, "");
+    repo_name = repo_path.split("/").pop()!.replace(/\.git$/, "");
+    initialState = "cloning";
+  } else {
+    // Local folder — relative paths resolve against the project root,
+    // so "demo-repo" works no matter where the server was started from.
+    repo_path = resolve(PROJECT_ROOT, input);
+    const st = statSync(repo_path, { throwIfNoEntry: false });
+    if (!st?.isDirectory()) {
+      throw new Error(
+        `Repository path is not a directory: ${repo_path}. ` +
+          `Use an absolute path, a path relative to the project root (e.g. "demo-repo"), ` +
+          `or a public GitHub URL (https://github.com/owner/repo).`
+      );
+    }
+    repo_name = basename(repo_path);
+    initialState = "exploring";
+  }
 
   const now = new Date().toISOString();
   const run: Run = {
     id: `run_${randomUUID().slice(0, 8)}`,
-    state: "exploring",
+    state: initialState,
     mode,
     repo_path,
-    repo_name: basename(repo_path),
+    repo_name,
     created_at: now,
     updated_at: now,
     questions: null,
@@ -126,8 +163,25 @@ export function startRun(repoPathRaw: string, mode: RunMode): RunView {
 
 /** The whole pipeline for one run, suspending where humans are needed. */
 async function drive(run: Run): Promise<void> {
+  // 0. GitHub URL? Shallow-clone it first (public repos only).
+  let localPath = run.repo_path;
+  if (isGithubUrl(run.repo_path)) {
+    const dest = join(tmpdir(), "pay_right_clones", `${run.repo_name}-${run.id}`);
+    try {
+      await execFileAsync("git", ["clone", "--depth", "1", run.repo_path, dest], {
+        timeout: 90_000,
+      });
+    } catch (e) {
+      throw new Error(
+        `Could not clone ${run.repo_path} — is it a public repository? (${(e as Error).message})`
+      );
+    }
+    localPath = dest;
+    touch(run, "exploring");
+  }
+
   // 1. Analyzer (suspends in ask_user until answers arrive)
-  const { report } = await runAnalyzer(run.repo_path, run.repo_name, async (questions) => {
+  const { report } = await runAnalyzer(localPath, run.repo_name, async (questions) => {
     run.questions = questions;
     touch(run, "awaiting_answers");
     return new Promise<Record<string, string>>((res) => {

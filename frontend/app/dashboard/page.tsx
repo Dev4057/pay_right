@@ -196,6 +196,7 @@ export default function Dashboard() {
       // Automatically transition UI screen based on backend state
       if (dataSource === 'real') {
         switch (data.state) {
+          case 'cloning':
           case 'exploring':
             setScreen(2);
             break;
@@ -729,7 +730,7 @@ export default function Dashboard() {
                     type="text"
                     value={repoPathInput}
                     onChange={(e) => setRepoPathInput(e.target.value)}
-                    placeholder="demo-repo (leaves blank to use bundled quicktalk repo)"
+                    placeholder="Blank = bundled demo-repo · or paste a public GitHub URL"
                     className="w-full bg-[#0A0A0A] border border-[#2D2D2D] text-xs font-mono text-[#F5F5F0] rounded p-3 focus:outline-none focus:border-[#FFD600]"
                   />
                 )}
@@ -737,7 +738,7 @@ export default function Dashboard() {
                 <div className="mt-2 text-[11px] text-[#555555] font-mono leading-normal">
                   {dataSource === 'mock' 
                     ? MOCK_REPOS.find(r => r.id === selectedRepoId)?.desc
-                    : "The Analyzer Agent will run static checks in this folder to assess framework and database setups."
+                    : "Accepts a public GitHub URL (https://github.com/owner/repo), a local folder path, or blank for the bundled demo-repo."
                   }
                 </div>
               </div>

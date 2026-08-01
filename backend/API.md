@@ -8,14 +8,15 @@ The frontend's whole job: **start a run, poll it, and render by `state`.**
 ## The run lifecycle
 
 ```
-exploring → awaiting_answers → analyzing → proposing → awaiting_decision → executing → completed
-                                                                                    ↘ halted
-                                                            (rejected decision) → rejected
-                                              (any stage) → error
+(cloning →) exploring → awaiting_answers → analyzing → proposing → awaiting_decision → executing → completed
+                                                                                                ↘ halted
+                                                                        (rejected decision) → rejected
+                                                          (any stage) → error
 ```
 
 | `state` | What the UI shows |
 |---|---|
+| `cloning` | GitHub URL runs only: "Cloning repository…" (treat like `exploring`) |
 | `exploring` | "Analyzer is reading the codebase…" (spinner + repo name) |
 | `awaiting_answers` | The Load Interview: render `run.questions`, POST answers |
 | `analyzing` | "Building the requirements report…" |
@@ -36,7 +37,11 @@ exploring → awaiting_answers → analyzing → proposing → awaiting_decision
 ```
 
 ### `POST /api/runs` — start a run
-Body (all optional): `{ "repo_path": "C:/abs/path", "mode": "approval" | "autonomy" }`
+Body (all optional): `{ "repo_path": "...", "mode": "approval" | "autonomy" }`
+`repo_path` accepts three forms:
+- **blank/omitted** → the bundled `demo-repo`
+- **a local path** — absolute, or relative to the project root (e.g. `"demo-repo"`)
+- **a public GitHub URL** (`https://github.com/owner/repo`) → shallow-cloned server-side; the run starts in state `cloning`, then proceeds normally
 Defaults: the bundled `demo-repo`, `approval`.
 Returns `201` with the run object (see below). `503` if the backend has no OpenAI key.
 
