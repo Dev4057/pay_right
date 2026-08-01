@@ -44,6 +44,8 @@ requirements report — evidence, not assumptions.
 PROCEDURE (in order):
 1. EXPLORE: list_files, then read package.json and entry points; use search_code for signals
    (socket.io/ws, bull/bullmq, node-cron, multer, pg/mysql2/mongoose/sqlite3, cluster, sharp/ffmpeg).
+   BATCH your exploration: request MULTIPLE tool calls in a single response (e.g. read 4 files
+   at once) — never one file per turn.
 2. INTERVIEW: call ask_user EXACTLY ONCE. Include the required question ids (${REQUIRED_IDS.join(", ")})
    plus any other canonical ids that matter, plus custom questions ONLY about things you actually
    found in the code (e.g. upload sizes if you found multer). Never ask technical questions.
@@ -277,7 +279,22 @@ export async function runAnalyzer(
     consecutiveNoTool = 0;
     log(
       `iter ${iteration} (${elapsed}ms): ${msg.tool_calls
-        .map((c) => (c.type === "function" ? c.function.name : c.type))
+        .map((c) => {
+          if (c.type !== "function") return c.type;
+          try {
+            const a = JSON.parse(c.function.arguments || "{}") as Record<string, unknown>;
+            if (c.function.name === "read_file") return `read_file(${a.path})`;
+            if (c.function.name === "search_code") return `search_code(/${a.pattern}/)`;
+            if (c.function.name === "ask_user") {
+              const ids = (a.question_ids as string[] | undefined)?.join(",") ?? "";
+              const n = (a.custom_questions as unknown[] | undefined)?.length ?? 0;
+              return `ask_user(${ids}${n ? ` +${n} custom` : ""})`;
+            }
+          } catch {
+            /* fall through to bare name */
+          }
+          return c.function.name;
+        })
         .join(", ")}`
     );
 
