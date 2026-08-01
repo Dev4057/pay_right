@@ -58,7 +58,10 @@ Returns the full run object:
   "proposal": { "...": "PurchaseProposal — same shape as src/core/fixtures/proposal.example.json" },
   "decision": null,
   "rules":    { "passed": true, "checks": [ { "rule": "spend-ceiling", "passed": true, "detail": "..." } ] },
-  "receipt":  { "status": "APPROVED | DECLINED | HALTED", "halt_reason": "...", "...": "..." },
+  "receipt":  { "status": "APPROVED | DECLINED | HALTED", "plan": "Hobby",
+                "halt_reason": "human text", "halt_code": "CAP_EXCEEDED | PRICE_MISMATCH | CATEGORY_VIOLATION | TRACEABILITY_BROKEN | USER_REJECTED | DECISION_INVALID | TRANSACTION_FAILED",
+                "retry_class": "no-retry | re-quote | user-approval",
+                "audit_seal": "sha256 over the whole decision bundle (tamper evidence)", "...": "..." },
   "payment_url": "https://sandbox.collect.prava.space?session=...",
   "error": null,
   "activity": [

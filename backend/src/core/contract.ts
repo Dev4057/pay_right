@@ -195,6 +195,28 @@ export type RulesCheckResult = z.infer<typeof RulesCheckResult>;
 /* Transaction receipt (Prava execution outcome)                       */
 /* ------------------------------------------------------------------ */
 
+/** Typed halt code — machine-readable cause, never inferred from prose. */
+export const HaltCode = z.enum([
+  "USER_REJECTED", // the human said no
+  "DECISION_INVALID", // decision doesn't authorize this proposal (wrong id / self-approval)
+  "CAP_EXCEEDED", // spend-ceiling rule failed
+  "PRICE_MISMATCH", // price-match rule failed (proposal stale vs charge)
+  "CATEGORY_VIOLATION", // category-lock rule failed
+  "TRACEABILITY_BROKEN", // reasoning cites findings that don't exist
+  "TRANSACTION_FAILED", // Prava/network failure during execution
+]);
+export type HaltCode = z.infer<typeof HaltCode>;
+
+/**
+ * What a LEGITIMATE next move is for the caller. We never auto-retry
+ * ourselves — this tells a buyer runtime how to react without parsing text:
+ *   no-retry      permanent; retrying is never valid
+ *   re-quote      the proposal is defective/stale; regenerate it
+ *   user-approval only a human action (raise cap, re-approve) unblocks this
+ */
+export const RetryClass = z.enum(["no-retry", "re-quote", "user-approval"]);
+export type RetryClass = z.infer<typeof RetryClass>;
+
 export const TransactionReceipt = z.object({
   proposal_id: z.string(),
   method: z.enum(["session", "mandate"]), // session = Approval Mode, mandate = Full Autonomy
@@ -202,6 +224,8 @@ export const TransactionReceipt = z.object({
   mandate_id: z.string().optional(),
   txn_ref_id: z.string().optional(),
   merchant: z.string(),
+  /** The exact plan bought/attempted — bound directly, not via lookup. */
+  plan: z.string(),
   amount: z.string(),
   currency: z.literal("USD"),
   status: z.enum([
@@ -209,8 +233,12 @@ export const TransactionReceipt = z.object({
     "DECLINED", // charge declined (e.g. THRESHOLD_EXCEEDED) — reported to Prava
     "HALTED", // rules layer or failure stopped it BEFORE/DURING checkout
   ]),
-  halt_reason: z.string().optional(),
+  halt_reason: z.string().optional(), // human-readable; halt_code is the typed truth
+  halt_code: HaltCode.optional(),
+  retry_class: RetryClass.optional(),
   timestamp: z.string().describe("ISO 8601"),
+  /** sha256 over {report, proposal, decision, rules, receipt-sans-seal} — tamper evidence. */
+  audit_seal: z.string().optional(),
 });
 export type TransactionReceipt = z.infer<typeof TransactionReceipt>;
 

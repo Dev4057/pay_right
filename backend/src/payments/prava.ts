@@ -93,7 +93,8 @@ export interface PaymentCredential {
  */
 export async function pollPaymentResult(
   sessionId: string,
-  { maxAttempts = 100, intervalMs = 3000 }: { maxAttempts?: number; intervalMs?: number } = {}
+  // 12 minutes: first-time card entry (OTP + passkey registration) can be slow.
+  { maxAttempts = 240, intervalMs = 3000 }: { maxAttempts?: number; intervalMs?: number } = {}
 ): Promise<PaymentCredential> {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await fetch(`${BASE}/v1/sessions/${sessionId}/payment-result`, {
@@ -101,29 +102,39 @@ export async function pollPaymentResult(
     });
     if (!res.ok) throw new Error(`payment-result failed (${res.status}): ${await res.text()}`);
     const data = (await res.json()) as {
-      status: "pending" | "completed" | "failed";
+      status: "pending" | "completed" | "awaiting_result" | "failed";
       transactions?: Array<{
         error?: { message?: string };
         line_items: Array<{
           txn_ref_id: string;
           merchant_name: string;
           total_amount: string;
-          token: string;
-          dynamic_cvv: string;
-          expiry_month: string;
-          expiry_year: string;
+          status?: string;
+          token?: string;
+          dynamic_cvv?: string;
+          expiry_month?: string;
+          expiry_year?: string;
         }>;
       }>;
     };
 
-    if (data.status === "completed") {
-      const li = data.transactions?.[0]?.line_items?.[0];
-      if (!li) throw new Error("payment-result completed but no line items present");
+    // The credential is ready on "completed" — but the live sandbox reports
+    // "awaiting_result" (credentials generated, outcome not yet reported)
+    // with the token already present on the line item. Accept both.
+    const li = data.transactions?.[0]?.line_items?.[0];
+    const credentialReady =
+      data.status === "completed" ||
+      (data.status === "awaiting_result" && Boolean(li?.token) && Boolean(li?.dynamic_cvv));
+
+    if (credentialReady) {
+      if (!li?.token || !li.dynamic_cvv) {
+        throw new Error(`payment-result ${data.status} but credential fields are missing`);
+      }
       return {
         token: li.token,
         dynamic_cvv: li.dynamic_cvv,
-        expiry_month: li.expiry_month,
-        expiry_year: li.expiry_year,
+        expiry_month: li.expiry_month ?? "",
+        expiry_year: li.expiry_year ?? "",
         txn_ref_id: li.txn_ref_id,
         merchant_name: li.merchant_name,
         total_amount: li.total_amount,
