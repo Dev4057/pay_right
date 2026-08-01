@@ -60,10 +60,18 @@ Returns the full run object:
   "rules":    { "passed": true, "checks": [ { "rule": "spend-ceiling", "passed": true, "detail": "..." } ] },
   "receipt":  { "status": "APPROVED | DECLINED | HALTED", "halt_reason": "...", "...": "..." },
   "payment_url": "https://sandbox.collect.prava.space?session=...",
-  "error": null
+  "error": null,
+  "activity": [
+    "13:41:02  analyzer started on demo-repo/",
+    "13:41:05  list_files, search_code(/socket.io/), search_code(/multer/)",
+    "13:41:08  read_file(package.json), read_file(server.js)",
+    "13:41:12  load interview: 5 questions for the founder"
+  ]
 }
 ```
-Fields are `null` until their stage has happened.
+Fields are `null` until their stage has happened. `activity` is the live agent
+feed ("the code rail") — append-only, capped at 300 lines; render it as a
+terminal during `cloning`/`exploring`/`analyzing`/`proposing`/`executing`.
 
 ### `POST /api/runs/:id/answers`
 Body: `{ "answers": { "Q_USERS": "100-1K", "Q_ACTIVITY": "All day", "...": "..." } }`

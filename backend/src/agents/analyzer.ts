@@ -167,11 +167,15 @@ interface AskUserArgs {
 export async function runAnalyzer(
   repoPath: string,
   repoName: string,
-  askUser: AskUser
+  askUser: AskUser,
+  onProgress?: (line: string) => void
 ): Promise<AnalyzerResult> {
   const openai = makeClient();
   const tools = new RepoTools(repoPath);
-  const log = (msg: string) => agentLog("analyzer", repoName, msg);
+  const log = (msg: string) => {
+    agentLog("analyzer", repoName, msg);
+    onProgress?.(msg);
+  };
 
   let interviewDone = false;
   let loadEstimate: LoadEstimate | null = null;
@@ -278,7 +282,7 @@ export async function runAnalyzer(
     }
     consecutiveNoTool = 0;
     log(
-      `iter ${iteration} (${elapsed}ms): ${msg.tool_calls
+      `${msg.tool_calls
         .map((c) => {
           if (c.type !== "function") return c.type;
           try {

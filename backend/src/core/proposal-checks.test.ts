@@ -65,3 +65,31 @@ test("wrong mode is rejected", () => {
   const errors = checkProposal(proposal, report, catalog, { ...expected, mode: "autonomy" });
   assert.ok(errors.some((e) => e.includes('meta.mode must be "autonomy"')));
 });
+
+test("entry tier is rejected for an L-class load", () => {
+  const bigReport = structuredClone(report);
+  bigReport.load_class.value = "L";
+  const errors = checkProposal(proposal, bigReport, catalog, expected); // proposal = Railway Hobby (entry)
+  assert.ok(errors.some((e) => e.includes("does not satisfy the report's requirements")));
+});
+
+test("non-cheapest eligible plan is rejected", () => {
+  // Report with no special needs and no DB: every plan is eligible, cheapest = $5.
+  const simpleReport = structuredClone(report);
+  simpleReport.special_needs = [];
+  simpleReport.database.value = { type: "none", shape: "none", workload: "unknown" };
+  const pricey = structuredClone(proposal);
+  pricey.recommended = {
+    provider: "Render",
+    plan: "Starter",
+    price: "7.00",
+    currency: "USD",
+    billing_cycle: "monthly",
+    checkout_url: "https://render.com/pricing",
+  };
+  pricey.alternatives = [
+    { provider: "Railway", plan: "Hobby", price: "5.00", why_rejected: "n/a" },
+  ];
+  const errors = checkProposal(pricey, simpleReport, catalog, expected);
+  assert.ok(errors.some((e) => e.includes("not the cheapest plan")));
+});

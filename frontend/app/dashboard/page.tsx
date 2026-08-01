@@ -352,12 +352,12 @@ export default function Dashboard() {
     }
   };
 
-  // --- Mock Auto-scroll logs terminal ---
+  // --- Auto-scroll logs terminal (mock logs + real activity rail) ---
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [logs, run?.activity?.length]);
 
   // --- Mock Scan Step Simulation ---
   useEffect(() => {
@@ -972,18 +972,47 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                /* Real API UI: Single honest loading state */
-                <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-12 flex flex-col items-center justify-center min-h-[300px] mb-6 text-center">
-                  <Loader2 size={36} className="text-[#FFD600] animate-spin mb-4" />
-                  <h3 className="font-grotesk text-sm font-bold uppercase tracking-wider text-[#F5F5F0]">
-                    Agent is reading your codebase
-                  </h3>
-                  <p className="font-mono text-xs text-[#888888] max-w-sm mt-2 leading-relaxed">
-                    Analyzing imports, configuration, runtime constraints, databases and dependency packages. This process takes roughly 30–50 seconds.
-                  </p>
-                  <div className="flex items-center gap-2 mt-6 px-3.5 py-1.5 rounded bg-[#141414] border border-[#2D2D2D] font-mono text-[10px] text-[#888888]">
-                    <span>RUN ID:</span>
-                    <span className="text-[#FFD600] font-bold">{runId}</span>
+                /* Real API UI: live agent activity rail ("the code rail") */
+                <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-hidden flex flex-col mb-6">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#1D1D1D] mb-3">
+                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase">
+                      <Terminal size={12} />
+                      Live Agent Activity
+                    </div>
+                    <div className="flex items-center gap-2 font-mono text-[10px] text-[#888888]">
+                      <Loader2 size={11} className="text-[#FFD600] animate-spin" />
+                      <span>RUN ID:</span>
+                      <span className="text-[#FFD600] font-bold">{runId}</span>
+                    </div>
+                  </div>
+                  <div
+                    ref={logContainerRef}
+                    className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed"
+                  >
+                    <AnimatePresence>
+                      {(run?.activity ?? []).map((line: string, idx: number) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, x: -5 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className={`py-1 border-b border-[#141414] ${
+                            line.includes('read_file') || line.includes('search_code') || line.includes('list_files')
+                              ? 'text-[#F5F5F0]'
+                              : line.includes('report ready') || line.includes('proposal:') || line.includes('4/4 passed')
+                                ? 'text-[#FFD600]'
+                                : line.includes('BLOCKED') || line.includes('FAILED')
+                                  ? 'text-[#FF6B35]'
+                                  : 'text-[#888888]'
+                          }`}
+                        >
+                          {line}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {(run?.activity?.length ?? 0) === 0 && (
+                      <div className="text-[#555555] py-1">connecting to agent…</div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1139,11 +1168,11 @@ export default function Dashboard() {
                       <p className="font-mono text-xs text-[#555]">No code signals detected.</p>
                     </div>
                   ) : (
-                    activeFindings.map((finding) => {
+                    activeFindings.map((finding, fIdx) => {
                       const isExpanded = expandedFindingId === finding.id;
                       return (
-                        <div 
-                          key={finding.id}
+                        <div
+                          key={`${finding.id}-${fIdx}`}
                           id={`finding-${finding.id}`}
                           className={`bg-[#0F0F0F] border rounded transition-all overflow-hidden ${
                             isExpanded ? 'border-[#FFD600] ring-1 ring-[#FFD600]/20' : 'border-[#2D2D2D]'
@@ -1612,8 +1641,8 @@ export default function Dashboard() {
                 <div>
                   <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-3">Linked Infrastructure Signals</h3>
                   <div className="flex flex-col gap-2">
-                    {activeFindings.map(finding => (
-                      <div key={finding.id} className="flex justify-between items-center p-3 bg-[#0A0A0A] border border-[#1D1D1D] rounded font-mono text-xs text-[#888888]">
+                    {activeFindings.map((finding, fIdx) => (
+                      <div key={`${finding.id}-${fIdx}`} className="flex justify-between items-center p-3 bg-[#0A0A0A] border border-[#1D1D1D] rounded font-mono text-xs text-[#888888]">
                         <span className="text-[#F5F5F0] font-medium">{finding.title}</span>
                         <ConfidenceBadge tag={finding.tag as any} />
                       </div>

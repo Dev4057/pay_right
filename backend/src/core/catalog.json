@@ -1,14 +1,15 @@
-{
+﻿{
   "meta": {
     "category": "hosting",
     "currency": "USD",
     "verified_at": "2026-08-01",
-    "note": "Hand-curated from provider pricing pages. Re-verify prices before the demo purchase — the price-match rule will block any drift."
+    "note": "Hand-curated from provider pricing pages. Re-verify prices before the demo purchase - the price-match rule will block any drift."
   },
   "plans": [
     {
       "provider": "Railway",
       "plan": "Hobby",
+      "tier": "entry",
       "price": "5.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://railway.app/pricing",
@@ -26,6 +27,7 @@
     {
       "provider": "Railway",
       "plan": "Pro",
+      "tier": "pro",
       "price": "20.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://railway.app/pricing",
@@ -43,6 +45,7 @@
     {
       "provider": "Render",
       "plan": "Starter",
+      "tier": "entry",
       "price": "7.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://render.com/pricing",
@@ -60,6 +63,7 @@
     {
       "provider": "Render",
       "plan": "Standard",
+      "tier": "standard",
       "price": "25.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://render.com/pricing",
@@ -77,6 +81,7 @@
     {
       "provider": "DigitalOcean",
       "plan": "App Platform Basic",
+      "tier": "entry",
       "price": "5.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://www.digitalocean.com/pricing/app-platform",
@@ -94,6 +99,7 @@
     {
       "provider": "DigitalOcean",
       "plan": "Basic Droplet 1GB",
+      "tier": "entry",
       "price": "6.00",
       "billing_cycle": "monthly",
       "checkout_url": "https://www.digitalocean.com/pricing/droplets",
@@ -106,7 +112,7 @@
         "autoscaling": "none",
         "persistent_disk": true
       },
-      "notes": "Raw VPS — you manage OS, deploys, TLS, and the database yourself."
+      "notes": "Raw VPS - you manage OS, deploys, TLS, and the database yourself."
     }
   ]
 }

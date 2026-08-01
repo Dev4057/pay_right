@@ -29,6 +29,14 @@ const base = {
   assigned_category: "hosting",
 };
 
+test("report with duplicate finding ids is rejected", () => {
+  const dupe = structuredClone(
+    JSON.parse(readFileSync(join(fixtures, "report.example.json"), "utf-8"))
+  );
+  dupe.load_class.id = "F4"; // collides with the websockets finding
+  assert.throws(() => validateReport(dupe), /duplicate finding ids: F4/);
+});
+
 test("toCents parses and rejects correctly", () => {
   assert.equal(toCents("5.00"), 500);
   assert.equal(toCents("30.00"), 3000);

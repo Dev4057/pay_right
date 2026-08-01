@@ -13,6 +13,8 @@ import { z } from "zod";
 export const CatalogPlan = z.object({
   provider: z.string(),
   plan: z.string(),
+  /** entry = cheapest tier; L-class loads may never land on entry. */
+  tier: z.enum(["entry", "standard", "pro"]),
   price: z.string().regex(/^\d+\.\d{2}$/),
   billing_cycle: z.enum(["monthly", "yearly", "usage-based"]),
   checkout_url: z.string().url(),
@@ -45,7 +47,8 @@ let cached: Catalog | null = null;
 export function loadCatalog(): Catalog {
   if (!cached) {
     const path = join(dirname(fileURLToPath(import.meta.url)), "catalog.json");
-    cached = Catalog.parse(JSON.parse(readFileSync(path, "utf-8")));
+    const raw = readFileSync(path, "utf-8").replace(/^﻿/, ""); // strip BOM if present
+    cached = Catalog.parse(JSON.parse(raw));
   }
   return cached;
 }
