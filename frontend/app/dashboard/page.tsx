@@ -191,12 +191,43 @@ export default function Dashboard() {
     fetchHealth();
   }, []);
 
+  // --- Auto-reattach: if the backend already has a run in flight (page was
+  //     refreshed, or polling was interrupted), pick it up where it left off
+  //     instead of orphaning it. Terminal runs are left alone. ---
+  useEffect(() => {
+    if (dataSource !== 'real') return;
+    const ACTIVE_STATES = [
+      'cloning', 'exploring', 'awaiting_answers',
+      'analyzing', 'proposing', 'awaiting_decision', 'executing',
+    ];
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:4000/api/runs');
+        if (!res.ok) return;
+        const data = await res.json();
+        const latest = data.runs?.[0];
+        if (latest && ACTIVE_STATES.includes(latest.state)) {
+          setRunId(latest.id);
+          setRun(latest);
+          setIsPolling(true); // pollRun moves the UI to the right screen
+        }
+      } catch {
+        /* backend offline — the landing screen still works */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- Real Backend Polling Logic ---
+  // One failed fetch must NOT kill the poll loop (the run keeps going on the
+  // backend regardless) — only give up after several failures in a row.
+  const pollFailures = useRef(0);
   const pollRun = async (id: string) => {
     try {
       const res = await fetch(`http://localhost:4000/api/runs/${id}`);
       if (!res.ok) throw new Error("Failed to fetch run details from backend");
       const data = await res.json();
+      pollFailures.current = 0;
       setRun(data);
 
       // Automatically transition UI screen based on backend state
@@ -239,8 +270,11 @@ export default function Dashboard() {
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message);
-      setIsPolling(false);
+      pollFailures.current += 1;
+      if (pollFailures.current >= 4) {
+        setErrorMessage(`Lost connection to the backend after ${pollFailures.current} attempts: ${err.message}`);
+        setIsPolling(false);
+      }
     }
   };
 
