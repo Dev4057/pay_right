@@ -8,6 +8,8 @@
 
 Built for the **Agentic Commerce Hackathon** · payments by [Prava](https://prava.space) · agents by OpenAI
 
+**[🌐 Live site](https://pay-right-eta.vercel.app) · [🎬 Watch the demo](https://youtu.be/SXK6j_DFot4)**
+
 </div>
 
 ---
@@ -108,9 +110,16 @@ No autonomous retry, ever — only transient network glitches are transparently 
 
 ## What a run looks like
 
+**[▶ Watch the 2-minute demo](https://youtu.be/SXK6j_DFot4)** — or the play-by-play:
+
 Sign in → paste a GitHub URL → watch the agent read the repo live (real file tree with the current file glowing, streaming findings) → answer 5 founder questions → review findings with evidence → see the proposal with reasons linked to findings → live rules check → passkey → green receipt with savings math and an agent-written deployment guide → the same receipt lands in your inbox → press **Deploy** and watch the app go live at a real URL.
 
 The deployer also has a **dry-run mode** that narrates every provider API call it *would* make without executing any — how we rehearse safely, and itself a transparency feature.
+
+## Try it
+
+- **Live site:** [pay-right-eta.vercel.app](https://pay-right-eta.vercel.app) — the product experience (the agent backend runs locally; the demo video shows the full live pipeline)
+- **Demo video:** [youtu.be/SXK6j_DFot4](https://youtu.be/SXK6j_DFot4)
 
 ## Run it yourself
 
@@ -137,7 +146,9 @@ Works with any public GitHub repo, a local path, or the bundled `demo-repo`. No 
 | [backend/API.md](backend/API.md) | The HTTP API the dashboard runs on |
 | [backend/README.md](backend/README.md) | Code map — where everything lives |
 
-**Stack:** TypeScript everywhere · 4 OpenAI tool-calling agents · zod contracts · Express · Next.js · Prava sandbox · Render deploy rail · **35 deterministic tests on the money and deploy paths**.
+**Stack:** TypeScript everywhere · 4 OpenAI tool-calling agents · zod contracts · Express · Next.js · Prava sandbox · Render deploy rail · **37 deterministic tests on the money and deploy paths**.
+
+**License:** [MIT](LICENSE)
 
 ---
 
