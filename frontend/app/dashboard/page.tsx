@@ -865,19 +865,19 @@ export default function Dashboard() {
       </header>
 
       {/* Step indicator — where you are in the pipeline, always visible */}
-      <div className="hidden md:flex items-center justify-center gap-0 h-[38px] border-b border-[#161616] bg-[#0C0C0C]">
+      <div className="hidden md:flex items-center justify-center gap-0 h-[44px] border-b border-[#222222] bg-[#0C0C0C]">
         {['CONNECT', 'MODE', 'SCAN', 'INTERVIEW', 'PROPOSAL', 'RULES', 'RECEIPT'].map((label, i) => (
           <div key={label} className="flex items-center">
-            {i > 0 && <span className={`w-8 h-px mx-2 ${i <= screen ? 'bg-[#FFD600]/40' : 'bg-[#222222]'}`} />}
-            <div className="flex items-center gap-1.5">
+            {i > 0 && <span className={`w-8 md:w-10 h-[1.5px] mx-2 md:mx-3 ${i <= screen ? 'bg-[#FFD600]/60' : 'bg-[#2D2D2D]'}`} />}
+            <div className="flex items-center gap-2">
               <span
-                className={`w-[5px] h-[5px] rounded-full transition-colors ${
-                  i === screen ? 'bg-[#FFD600]' : i < screen ? 'bg-[#FFD600]/40' : 'bg-[#2D2D2D]'
+                className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  i === screen ? 'bg-[#FFD600]' : i < screen ? 'bg-[#FFD600]/60' : 'bg-[#3D3D3D]'
                 }`}
               />
               <span
-                className={`font-mono text-[9px] tracking-[1.5px] transition-colors ${
-                  i === screen ? 'text-[#FFD600] font-bold' : i < screen ? 'text-[#888888]' : 'text-[#444444]'
+                className={`font-ibm-mono text-[11px] md:text-[12px] tracking-[2px] uppercase transition-colors ${
+                  i === screen ? 'text-[#FFD600] font-bold' : i < screen ? 'text-[#CCCCCC] font-semibold' : 'text-[#666666]'
                 }`}
               >
                 {label}
