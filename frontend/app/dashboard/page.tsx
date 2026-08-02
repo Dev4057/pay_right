@@ -847,17 +847,21 @@ export default function Dashboard() {
 
           {/* Signed-in user + logout */}
           {authUser && (
-            <div className="flex items-center gap-2.5 pl-3 border-l border-[#2D2D2D]">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#888888]">
-                <User size={12} className="text-[#FFD600]" />
-                <span className="text-[#F5F5F0] max-w-[140px] truncate">{authUser.name}</span>
+            <div className="flex items-center gap-3 pl-4 border-l border-[#2D2D2D]">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#FFD600]/10 border border-[#FFD600]/30">
+                  <User size={14} className="text-[#FFD600]" />
+                </span>
+                <span className="font-grotesk text-[13px] font-medium text-[#F5F5F0] max-w-[180px] truncate">
+                  {authUser.name}
+                </span>
               </div>
               <button
                 onClick={handleLogout}
                 title="Sign out"
                 className="text-[#555555] hover:text-[#FF6B35] transition-colors"
               >
-                <LogOut size={13} />
+                <LogOut size={15} />
               </button>
             </div>
           )}

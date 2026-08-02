@@ -15,7 +15,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pay Right — Pre-Deployment Infra Fit Agent",
+  title: "PAY RIGHT",
   description:
     "An agent that reads your codebase, finds the hosting plan that truly fits, and buys it safely through Prava — with hard spend limits enforced by code.",
   icons: { icon: "/logo.png" },
