@@ -1169,14 +1169,14 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex flex-col"
+              className="w-full max-w-[1300px] mx-auto flex flex-col py-4 md:py-6"
             >
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="font-grotesk text-lg md:text-xl font-bold tracking-wide uppercase flex items-center gap-2">
+                  <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide uppercase text-[#F5F5F0] flex items-center gap-2">
                     Scanning {getRepoName()}
                   </h2>
-                  <span className="font-mono text-[9px] text-[#888888] uppercase tracking-wider">
+                  <span className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] uppercase tracking-wider font-semibold block mt-1">
                     {dataSource === 'mock' 
                       ? "Analyzing static files and config trees"
                       : `State: ${run?.state || 'analyzing'} — Running OpenAI analysis agent...`
@@ -1184,7 +1184,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 {dataSource === 'mock' && (
-                  <div className="font-mono text-xs text-[#FFD600] bg-[#FFD600]/10 border border-[#FFD600]/20 px-2.5 py-0.5 rounded">
+                  <div className="font-ibm-mono text-sm text-[#FFD600] bg-[#FFD600]/15 border border-[#FFD600]/30 px-3 py-1 rounded font-bold">
                     {scanProgress}%
                   </div>
                 )}
@@ -1192,27 +1192,27 @@ export default function Dashboard() {
 
               {dataSource === 'mock' ? (
                 /* Mock Panel UI: File Tree & Streaming Logs */
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
                   {/* Left panel: File Tree */}
-                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-y-auto flex flex-col">
-                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
-                      <Folder size={12} />
+                  <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 h-[460px] md:h-[500px] overflow-y-auto flex flex-col shadow-xl">
+                    <div className="flex items-center gap-2 text-[#FFD600] font-ibm-mono text-xs md:text-sm font-bold tracking-wider uppercase pb-3 border-b border-[#262626] mb-3">
+                      <Folder size={14} />
                       Project File Directory
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto font-ibm-mono text-xs md:text-sm text-[#F5F5F0]">
                       {MOCK_FILE_TREE.map(node => renderFileNode(node))}
                     </div>
                   </div>
 
                   {/* Right panel: Live Logs */}
-                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-hidden flex flex-col">
-                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
-                      <Terminal size={12} />
+                  <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 h-[460px] md:h-[500px] overflow-hidden flex flex-col shadow-xl">
+                    <div className="flex items-center gap-2 text-[#FFD600] font-ibm-mono text-xs md:text-sm font-bold tracking-wider uppercase pb-3 border-b border-[#262626] mb-3">
+                      <Terminal size={14} />
                       Streaming Agent Findings
                     </div>
                     <div 
                       ref={logContainerRef}
-                      className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#888888]"
+                      className="flex-1 overflow-y-auto font-ibm-mono text-xs md:text-sm leading-relaxed text-[#D4D4D4]"
                     >
                       <AnimatePresence>
                         {logs.map((log, idx) => (
@@ -1221,12 +1221,12 @@ export default function Dashboard() {
                             initial={{ opacity: 0, x: -5 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.15 }}
-                            className={`py-1 border-b border-[#141414] ${
+                            className={`py-1 border-b border-[#1A1A1A] ${
                               log && log.startsWith('→') 
-                                ? 'text-[#FFD600] pl-3' 
+                                ? 'text-[#FFD600] font-bold pl-3' 
                                 : log && log.startsWith('Reading') 
-                                  ? 'text-[#F5F5F0] font-medium' 
-                                  : 'text-[#888888]'
+                                  ? 'text-[#FFFFFF] font-bold' 
+                                  : 'text-[#D4D4D4]'
                             }`}
                           >
                             {log}
@@ -1238,22 +1238,22 @@ export default function Dashboard() {
                 </div>
               ) : (
                 /* Real API UI: file tree + streaming findings, fed by live run data */
-                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
                   {/* Left panel: real project file tree */}
-                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-y-auto flex flex-col">
-                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
-                      <Folder size={12} />
+                  <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 h-[460px] md:h-[500px] overflow-y-auto flex flex-col shadow-xl">
+                    <div className="flex items-center gap-2 text-[#FFD600] font-ibm-mono text-xs md:text-sm font-bold tracking-wider uppercase pb-3 border-b border-[#262626] mb-3">
+                      <Folder size={14} />
                       Project File Directory
-                      <span className="ml-auto text-[#888888] normal-case tracking-normal">
+                      <span className="ml-auto text-[#D4D4D4] normal-case tracking-normal font-normal">
                         {run?.files?.length ? `${run.files.length} files` : ''}
                       </span>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto font-ibm-mono text-xs md:text-sm text-[#F5F5F0]">
                       {realTree.length > 0 ? (
                         realTree.map(node => renderFileNode(node))
                       ) : (
-                        <div className="flex items-center gap-2 font-mono text-xs text-[#555555] py-2">
-                          <Loader2 size={12} className="animate-spin text-[#FFD600]" />
+                        <div className="flex items-center gap-2 font-ibm-mono text-xs text-[#A3A3A3] py-2">
+                          <Loader2 size={14} className="animate-spin text-[#FFD600]" />
                           {run?.state === 'cloning' ? 'Cloning repository...' : 'Indexing files...'}
                         </div>
                       )}
@@ -1261,18 +1261,18 @@ export default function Dashboard() {
                   </div>
 
                   {/* Right panel: streaming agent findings (live activity, prettified) */}
-                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-hidden flex flex-col">
-                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
-                      <Terminal size={12} />
+                  <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 h-[460px] md:h-[500px] overflow-hidden flex flex-col shadow-xl">
+                    <div className="flex items-center gap-2 text-[#FFD600] font-ibm-mono text-xs md:text-sm font-bold tracking-wider uppercase pb-3 border-b border-[#262626] mb-3">
+                      <Terminal size={14} />
                       Streaming Agent Findings
-                      <span className="ml-auto flex items-center gap-2 text-[#888888] normal-case tracking-normal">
-                        <Loader2 size={11} className="text-[#FFD600] animate-spin" />
+                      <span className="ml-auto flex items-center gap-2 text-[#D4D4D4] normal-case tracking-normal">
+                        <Loader2 size={13} className="text-[#FFD600] animate-spin" />
                         <span className="text-[#FFD600] font-bold">{runId}</span>
                       </span>
                     </div>
                     <div
                       ref={logContainerRef}
-                      className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed"
+                      className="flex-1 overflow-y-auto font-ibm-mono text-xs md:text-sm leading-relaxed"
                     >
                       <AnimatePresence>
                         {realLogEntries.map((entry: { text: string; kind: string }, idx: number) => (
@@ -1281,16 +1281,16 @@ export default function Dashboard() {
                             initial={{ opacity: 0, x: -5 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.15 }}
-                            className={`py-1 border-b border-[#141414] ${
+                            className={`py-1 border-b border-[#1A1A1A] ${
                               entry.kind === 'read'
-                                ? 'text-[#F5F5F0] font-medium'
+                                ? 'text-[#FFFFFF] font-bold'
                                 : entry.kind === 'scan'
-                                  ? 'text-[#FFD600] pl-3'
+                                  ? 'text-[#FFD600] font-bold pl-3'
                                   : entry.kind === 'milestone'
-                                    ? 'text-[#FFD600]'
+                                    ? 'text-[#FFD600] font-bold'
                                     : entry.kind === 'error'
-                                      ? 'text-[#FF6B35]'
-                                      : 'text-[#888888]'
+                                      ? 'text-[#FF6B35] font-bold'
+                                      : 'text-[#D4D4D4]'
                             }`}
                           >
                             {entry.text}
@@ -1298,7 +1298,7 @@ export default function Dashboard() {
                         ))}
                       </AnimatePresence>
                       {realLogEntries.length === 0 && (
-                        <div className="text-[#555555] py-1">connecting to agent…</div>
+                        <div className="text-[#A3A3A3] py-1 font-ibm-mono text-xs">connecting to agent…</div>
                       )}
                     </div>
                   </div>
@@ -1306,7 +1306,7 @@ export default function Dashboard() {
               )}
 
               {/* Progress bar */}
-              <div className="w-full bg-[#1D1D1D] rounded-full h-1.5 mb-2 overflow-hidden">
+              <div className="w-full bg-[#222222] rounded-full h-2 mb-2 overflow-hidden">
                 <motion.div 
                   className="bg-[#FFD600] h-full"
                   initial={{ width: '0%' }}
@@ -1317,9 +1317,9 @@ export default function Dashboard() {
                   }}
                 />
               </div>
-              <div className="flex justify-between font-mono text-[9px] text-[#555555] uppercase">
-                <span>Scanning repository</span>
-                <span>Connecting agent intelligence...</span>
+              <div className="flex justify-between font-ibm-mono text-xs text-[#A3A3A3] uppercase font-bold mt-1">
+                <span>Scanning Repository</span>
+                <span>Connecting Agent Intelligence...</span>
               </div>
             </motion.div>
           )}
@@ -1332,25 +1332,25 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex flex-col"
+              className="w-full max-w-[1280px] mx-auto flex flex-col py-4 md:py-6"
             >
               <div className="mb-6">
-                <h2 className="font-grotesk text-lg md:text-xl font-bold tracking-wide uppercase">
+                <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide uppercase text-[#F5F5F0]">
                   Load Capacity Interview
                 </h2>
-                <p className="font-mono text-[10px] text-[#888888] uppercase mt-1">
+                <p className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] uppercase tracking-wider font-semibold mt-1">
                   Answer business parameters below to compute expected server workload classes.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-5 mb-8">
+              <div className="flex flex-col gap-6 mb-8">
                 {dataSource === 'mock' ? (
                   /* Mock Interview (Static) */
-                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-6 font-mono text-xs flex flex-col gap-4">
-                    <p className="font-bold text-[#F5F5F0]">1. What is the expected peak connection count?</p>
-                    <div className="flex flex-col gap-2">
+                  <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 md:p-8 font-ibm-mono text-sm md:text-base flex flex-col gap-4 shadow-xl">
+                    <p className="font-bold text-[#F5F5F0] text-base">1. What is the expected peak connection count?</p>
+                    <div className="flex flex-col gap-3">
                       {["About a team of 10", "About a classroom of 100", "An audience of 1000s"].map((opt, i) => (
-                        <label key={i} className="flex items-center gap-2.5 cursor-pointer text-[#888888] hover:text-[#F5F5F0]">
+                        <label key={i} className="flex items-center gap-3 cursor-pointer text-xs md:text-sm text-[#D4D4D4] hover:text-[#FFFFFF]">
                           <input type="radio" name="mock_q1" defaultChecked={i === 1} className="accent-[#FFD600]" />
                           <span>{opt}</span>
                         </label>
@@ -1360,19 +1360,19 @@ export default function Dashboard() {
                 ) : (
                   /* Real Interview (Dynamic from backend) */
                   run?.questions?.map((q: any) => (
-                    <div key={q.q_id} className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 flex flex-col gap-4 font-mono text-xs">
-                      <div className="font-bold text-[#F5F5F0] flex items-start gap-2">
-                        <span className="text-[#FFD600]">{q.q_id}.</span>
+                    <div key={q.q_id} className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 md:p-8 flex flex-col gap-4 font-ibm-mono text-sm md:text-base shadow-xl">
+                      <div className="font-bold text-[#F5F5F0] text-sm md:text-base flex items-start gap-2">
+                        <span className="text-[#FFD600] font-bold">{q.q_id}.</span>
                         <span>{q.question}</span>
                       </div>
-                      <div className="flex flex-col gap-2.5 pl-5 border-l border-[#1D1D1D]">
+                      <div className="flex flex-col gap-3 pl-6 border-l-2 border-[#262626]">
                         {q.options.map((opt: string) => {
                           const isSelected = interviewAnswers[q.q_id] === opt;
                           return (
                             <label 
                               key={opt} 
-                              className={`flex items-center gap-3 cursor-pointer text-xs p-2 rounded transition-colors ${
-                                isSelected ? 'bg-[#FFD600]/5 text-[#FFD600]' : 'text-[#888888] hover:text-[#F5F5F0]'
+                              className={`flex items-center gap-3 cursor-pointer text-xs md:text-sm p-3 rounded transition-colors ${
+                                isSelected ? 'bg-[#FFD600]/10 border border-[#FFD600]/30 text-[#FFD600] font-bold' : 'text-[#D4D4D4] hover:text-[#FFFFFF]'
                               }`}
                             >
                               <input 
@@ -1396,14 +1396,14 @@ export default function Dashboard() {
               <div className="flex justify-between items-center">
                 <button 
                   onClick={handleRestart}
-                  className="font-grotesk text-[10px] font-bold text-[#888888] hover:text-[#F5F5F0] bg-transparent border border-[#2D2D2D] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm"
+                  className="font-grotesk text-xs md:text-sm font-bold text-[#D4D4D4] hover:text-[#FFFFFF] bg-transparent border border-[#333333] hover:border-[#666666] px-6 py-3 transition-colors uppercase tracking-wider rounded-sm"
                 >
                   Restart
                 </button>
                 <button 
                   onClick={handleSubmitAnswers}
                   disabled={dataSource === 'real' && (!run?.questions || run.questions.some((q: any) => !interviewAnswers[q.q_id]))}
-                  className="font-grotesk text-[10px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-6 py-2.5 transition-colors uppercase tracking-wider rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="font-grotesk text-xs md:text-sm font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#e6c200] px-8 py-3 transition-colors uppercase tracking-wider rounded-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Submit & Compute Fit
                 </button>
