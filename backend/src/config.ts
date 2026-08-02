@@ -20,6 +20,15 @@ const Env = z.object({
     .regex(/^\d+(\.\d{2})?$/, "amount like 30.00")
     .default("30.00"),
   ASSIGNED_CATEGORY: z.literal("hosting").default("hosting"),
+  /** SMTP for the receipt email — all optional; unset = email step is skipped.
+   *  Gmail: SMTP_HOST=smtp.gmail.com SMTP_PORT=465 SMTP_USER=you@gmail.com
+   *  SMTP_PASS=<app password, NOT your real password>. */
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  /** From header; defaults to SMTP_USER. */
+  SMTP_FROM: z.string().optional(),
 });
 
 export const env = Env.parse(process.env);

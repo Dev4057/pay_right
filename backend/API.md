@@ -37,7 +37,9 @@ The frontend's whole job: **start a run, poll it, and render by `state`.**
 ```
 
 ### `POST /api/runs` — start a run
-Body (all optional): `{ "repo_path": "...", "mode": "approval" | "autonomy", "wallet_limit_usd": 30 }`
+Body (all optional): `{ "repo_path": "...", "mode": "approval" | "autonomy", "wallet_limit_usd": 30, "user_email": "you@x.io", "user_name": "You" }`
+`user_email`/`user_name` — the signed-in dashboard user; the post-purchase
+receipt email (receipt + savings + deployment guide) goes to this address.
 `wallet_limit_usd` (number, 1–1000) sets THIS run's hard spend ceiling — the
 deterministic spend-ceiling rule uses it instead of the backend's
 `WALLET_LIMIT_USD` env default. Set it below the plan price to demo a live
@@ -81,6 +83,13 @@ feed ("the code rail") — append-only, capped at 300 lines; render it as a
 terminal during `cloning`/`exploring`/`analyzing`/`proposing`/`executing`.
 `files` (string[], repo-relative paths, capped at 500) appears once the repo is
 indexed — use it to render the project file tree next to the activity feed.
+
+After a successful purchase (`state: "completed"`) three more fields fill in,
+in this order — keep polling until `email_status` is non-null:
+- `savings` — deterministic money math: `{ headline, monthly_savings, yearly_savings, pricier_fits[], avoided_traps[] }`
+  (chosen plan vs the priciest plan that also fits, plus cheaper plans that fail a requirement)
+- `deploy_guide` — markdown deployment guide for THIS repo on THE purchased plan, written by the deploy-guide agent
+- `email_status` — `"sent to x@y.io"` | `"skipped (...)"` | `"failed: ..."` (always set last)
 
 ### `POST /api/runs/:id/answers`
 Body: `{ "answers": { "Q_USERS": "100-1K", "Q_ACTIVITY": "All day", "...": "..." } }`

@@ -73,6 +73,9 @@ const StartRunBody = z.object({
   // Per-run spend ceiling set from the dashboard slider. Falls back to the
   // WALLET_LIMIT_USD env value when omitted.
   wallet_limit_usd: z.number().min(1).max(1000).optional(),
+  // Who signed in on the dashboard — the receipt email goes to this address.
+  user_email: z.string().email().optional(),
+  user_name: z.string().max(120).optional(),
 });
 
 app.post("/api/runs", (req, res) => {
@@ -89,7 +92,8 @@ app.post("/api/runs", (req, res) => {
     const run = startRun(
       parsed.data.repo_path ?? DEFAULT_REPO,
       parsed.data.mode,
-      parsed.data.wallet_limit_usd
+      parsed.data.wallet_limit_usd,
+      { email: parsed.data.user_email, name: parsed.data.user_name }
     );
     res.status(201).json(run);
   } catch (e) {
