@@ -42,6 +42,8 @@ export interface ExecuteInput {
   proposal: PurchaseProposal;
   decision: ApprovalDecision;
   user: { id: string; email: string };
+  /** Per-run spend ceiling ("50.00"). Omitted = env WALLET_LIMIT_USD. */
+  wallet_limit_usd?: string;
   /** Called with the Prava payment URL so the runner/UI can show it to the user. */
   onPaymentUrl?: (url: string, sessionId: string) => void;
 }
@@ -80,7 +82,13 @@ export async function executePurchase(input: ExecuteInput): Promise<ExecuteOutco
 
   // Gate 0: the decision must authorize this exact proposal.
   const auth = decisionAuthorizes(decision, proposal);
-  const rules = runRulesCheck({ report, proposal, decision, charge_amount: chargeAmount });
+  const rules = runRulesCheck({
+    report,
+    proposal,
+    decision,
+    charge_amount: chargeAmount,
+    wallet_limit_usd: input.wallet_limit_usd,
+  });
 
   // Every outcome leaves with a tamper-evident seal over the whole bundle.
   const sealed = (receipt: TransactionReceipt): ExecuteOutcome => {

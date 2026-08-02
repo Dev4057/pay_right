@@ -70,6 +70,9 @@ app.get("/api/runs", (_req, res) => {
 const StartRunBody = z.object({
   repo_path: z.string().optional(),
   mode: z.enum(["approval", "autonomy"]).default("approval"),
+  // Per-run spend ceiling set from the dashboard slider. Falls back to the
+  // WALLET_LIMIT_USD env value when omitted.
+  wallet_limit_usd: z.number().min(1).max(1000).optional(),
 });
 
 app.post("/api/runs", (req, res) => {
@@ -83,7 +86,11 @@ app.post("/api/runs", (req, res) => {
     return;
   }
   try {
-    const run = startRun(parsed.data.repo_path ?? DEFAULT_REPO, parsed.data.mode);
+    const run = startRun(
+      parsed.data.repo_path ?? DEFAULT_REPO,
+      parsed.data.mode,
+      parsed.data.wallet_limit_usd
+    );
     res.status(201).json(run);
   } catch (e) {
     res.status(400).json({ error: (e as Error).message });

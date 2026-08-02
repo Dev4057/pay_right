@@ -29,6 +29,7 @@ import type { QuestionDef } from "../core/interview.js";
 import { runAnalyzer } from "../agents/analyzer.js";
 import { runInfraAgent } from "../agents/infra.js";
 import { executePurchase } from "../payments/executor.js";
+import { RepoTools } from "../agents/repo-tools.js";
 
 export type RunState =
   | "cloning"
@@ -63,6 +64,10 @@ interface Run {
   error: string | null;
   /** Live agent activity feed ("the code rail") — newest last, capped. */
   activity: string[];
+  /** Repo file paths (repo-relative) — lets the UI render a real file tree. */
+  files: string[] | null;
+  /** Spend ceiling for THIS run (dashboard slider). null = env default. */
+  wallet_limit_usd: string | null;
   /** Internal deferred resolvers — never serialized to clients. */
   _resolveAnswers: ((answers: Record<string, string>) => void) | null;
   _resolveDecision: ((decision: ApprovalDecision) => void) | null;
@@ -115,7 +120,7 @@ export function listRuns(): RunView[] {
     .map(toView);
 }
 
-export function startRun(repoPathRaw: string, mode: RunMode): RunView {
+export function startRun(repoPathRaw: string, mode: RunMode, walletLimitUsd?: number): RunView {
   const input = repoPathRaw.trim();
   let repo_path: string;
   let repo_name: string;
@@ -160,11 +165,16 @@ export function startRun(repoPathRaw: string, mode: RunMode): RunView {
     payment_url: null,
     error: null,
     activity: [],
+    files: null,
+    wallet_limit_usd: walletLimitUsd != null ? walletLimitUsd.toFixed(2) : null,
     _resolveAnswers: null,
     _resolveDecision: null,
   };
   runs.set(run.id, run);
   act(run, initialState === "cloning" ? `cloning ${repo_path} ...` : `analyzer started on ${repo_name}/`);
+  if (run.wallet_limit_usd) {
+    act(run, `spend ceiling for this run: $${run.wallet_limit_usd} (set from dashboard)`);
+  }
 
   void drive(run).catch((e) => {
     run.error = (e as Error).message;
@@ -192,6 +202,15 @@ async function drive(run: Run): Promise<void> {
     localPath = dest;
     act(run, `clone complete -> analyzing ${run.repo_name}/`);
     touch(run, "exploring");
+  }
+
+  // Index the repo's files so the UI can render a real file tree.
+  try {
+    const listing = new RepoTools(localPath).listFiles();
+    run.files = listing.files;
+    act(run, `indexed ${listing.files.length} files${listing.truncated ? " (capped at 500)" : ""}`);
+  } catch {
+    run.files = null; // non-fatal — the tree just won't render
   }
 
   // 1. Analyzer. The trick that makes the interview work over HTTP: when the
@@ -264,6 +283,7 @@ async function drive(run: Run): Promise<void> {
       proposal,
       decision,
       user: USER,
+      wallet_limit_usd: run.wallet_limit_usd ?? undefined,
     });
     run.rules = outcome.rules;
     run.receipt = outcome.receipt;
@@ -279,6 +299,7 @@ async function drive(run: Run): Promise<void> {
     proposal,
     decision,
     user: USER,
+    wallet_limit_usd: run.wallet_limit_usd ?? undefined,
     onPaymentUrl: (url) => {
       run.payment_url = url;
       act(run, "Prava session created — waiting for card + passkey approval");

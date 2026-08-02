@@ -15,9 +15,9 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pay Right — Build Without Limits",
+  title: "Pay Right — Pre-Deployment Infra Fit Agent",
   description:
-    "The industrial-grade design system for builders who don't compromise.",
+    "An agent that reads your codebase, finds the hosting plan that truly fits, and buys it safely through Prava — with hard spend limits enforced by code.",
 };
 
 export default function RootLayout({

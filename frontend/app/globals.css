@@ -24,3 +24,124 @@
 @utility font-ibm-mono {
   font-family: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
 }
+
+/* ---------------------------------------------------------------------------
+   Smoothness layer — small global touches that make the whole app feel calm:
+   soft scrollbars, gentle button presses, a proper slider thumb, yellow
+   selection/focus. No layout changes, purely feel.
+--------------------------------------------------------------------------- */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Text selection in brand yellow */
+::selection {
+  background: rgba(255, 214, 0, 0.25);
+  color: #f5f5f0;
+}
+
+/* Thin, dark scrollbars (terminals, file tree, long pages) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2d2d2d transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #2d2d2d;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+/* Every interactive control eases instead of snapping */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+/* Tactile press feedback on buttons and button-like links */
+button:active,
+a[class*="bg-[#FFD600]"]:active {
+  transform: scale(0.985);
+}
+
+/* Keyboard focus ring in brand yellow (mouse clicks stay clean) */
+:focus-visible {
+  outline: 2px solid rgba(255, 214, 0, 0.55);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The spend-ceiling slider: styled track + glowing yellow thumb */
+input[type="range"] {
+  background: #1d1d1d;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--yellow);
+  border: 3px solid #0a0a0a;
+  box-shadow: 0 0 0 1px rgba(255, 214, 0, 0.4);
+  cursor: grab;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 0 5px rgba(255, 214, 0, 0.15);
+  transform: scale(1.1);
+}
+input[type="range"]:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  box-shadow: 0 0 0 7px rgba(255, 214, 0, 0.2);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--yellow);
+  border: 2px solid #0a0a0a;
+  box-shadow: 0 0 0 1px rgba(255, 214, 0, 0.4);
+  cursor: grab;
+  transition: box-shadow 0.2s ease;
+}
+input[type="range"]::-moz-range-thumb:hover {
+  box-shadow: 0 0 0 5px rgba(255, 214, 0, 0.15);
+}
+
+/* Honor users who turn animations off */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
