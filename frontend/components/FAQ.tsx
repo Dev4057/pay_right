@@ -25,7 +25,7 @@ export default function FAQ() {
         <SectionHeader
           label="[08] // FAQ"
           title={"GOT\nQUESTIONS?"}
-          subtitle="EVERYTHING YOU NEED TO KNOW BEFORE SHIPPING YOUR FIRST PIXEL."
+          subtitle="EVERYTHING YOU NEED TO KNOW BEFORE YOUR AGENT SPENDS A RUPEE."
           titleWidth="w-full"
           subtitleWidth="w-full"
         />

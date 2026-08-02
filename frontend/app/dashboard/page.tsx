@@ -766,18 +766,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col font-sans select-none pb-20 relative text-[#F5F5F0]">
+    <div className="min-h-screen bg-[#0A0A0A] flex flex-col font-sans select-none relative text-[#F5F5F0]">
       {/* Header */}
       <header className="h-[60px] border-b border-[#1D1D1D] flex items-center justify-between px-6 bg-[#0E0E0E] sticky top-0 z-40">
-        <div className="flex items-center gap-3">
-          <span className="w-2.5 h-2.5 bg-[#FFD600] rounded-sm shrink-0" />
+        <a href="/" className="flex items-center gap-3 group">
+          <span className="w-2.5 h-2.5 bg-[#FFD600] group-hover:scale-110 transition-transform shrink-0" />
           <span className="font-grotesk text-[13px] font-bold tracking-[2.5px] text-[#F5F5F0] uppercase">
-            Pay Right
+            PAY RIGHT
           </span>
-          <span className="hidden md:inline font-mono text-[9px] text-[#555555] tracking-wider uppercase border-l border-[#2D2D2D] pl-3">
-            powered by Prava
+          <span className="hidden md:inline font-ibm-mono text-[9px] text-[#555555] tracking-wider uppercase border-l border-[#2D2D2D] pl-3">
+            POWERED BY PRAVA
           </span>
-        </div>
+        </a>
         
         <div className="flex items-center gap-4">
           {/* Connection Status Badge */}
@@ -836,9 +836,9 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-[1000px] w-full mx-auto p-4 md:p-8 flex flex-col justify-center">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-6 md:px-12 py-3 md:py-6 flex flex-col justify-center">
         {errorMessage && (
-          <div className="bg-[#FF6B35]/15 border border-[#FF6B35] text-[#FF6B35] font-mono text-xs rounded p-4 mb-6 flex items-start gap-2.5">
+          <div className="bg-[#FF6B35]/15 border border-[#FF6B35] text-[#FF6B35] font-mono text-xs rounded p-3 mb-4 flex items-start gap-2.5">
             <AlertTriangle size={16} className="shrink-0 mt-0.5" />
             <div>
               <div className="font-bold uppercase">System Error</div>
@@ -856,22 +856,30 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-col items-center justify-center text-center max-w-xl mx-auto py-12"
+              className="flex flex-col items-center justify-center text-center w-full max-w-[1000px] mx-auto py-2 md:py-4"
             >
-              <span className="font-mono text-[10px] text-[#FFD600] tracking-[4px] uppercase bg-[#FFD600]/10 px-3 py-1 rounded-full mb-6">
-                Automated Cloud Sourcing
-              </span>
-              <h1 className="font-grotesk text-3xl md:text-5xl font-bold tracking-tight mb-4 text-[#F5F5F0]">
-                We read your code before you deploy
+              {/* Badge */}
+              <div className="flex items-center justify-center gap-[8px] h-[30px] px-[14px] bg-[#1A1A1A] border-2 border-[#FFD600] mb-4">
+                <div className="w-[6px] h-[6px] bg-[#FFD600] shrink-0" />
+                <span className="font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px] uppercase">
+                  [01] // AUTOMATED CLOUD SOURCING
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="font-grotesk text-3xl md:text-5xl font-bold tracking-[-1px] mb-3 text-[#F5F5F0] uppercase leading-tight w-full max-w-[850px]">
+                WE READ YOUR CODE BEFORE YOU DEPLOY.
               </h1>
-              <p className="text-sm md:text-base text-[#888888] max-w-md mb-8 leading-relaxed">
-                Connect your repository. Our agent will analyze code dependencies, evaluate capacity requirements, audit compliance policies, and checkout plans automatically via Prava.
+
+              {/* Subheading */}
+              <p className="font-ibm-mono text-[12px] md:text-[13px] text-[#888888] tracking-[0.5px] leading-[1.5] w-full max-w-[700px] mb-6 uppercase">
+                CONNECT YOUR REPOSITORY. OUR AGENT WILL ANALYZE CODE DEPENDENCIES, EVALUATE CAPACITY REQUIREMENTS, AUDIT COMPLIANCE POLICIES, AND CHECKOUT PLANS AUTOMATICALLY VIA PRAVA.
               </p>
 
               {/* Repository Selector / Path Config */}
-              <div className="w-full bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 mb-8 text-left">
-                <label className="block font-mono text-[10px] text-[#555555] tracking-wider uppercase mb-2">
-                  Target Repository Path
+              <div className="w-full max-w-[700px] bg-[#0F0F0F] border-2 border-[#2D2D2D] p-5 mb-6 text-left shadow-xl">
+                <label className="block font-ibm-mono text-[10px] font-bold text-[#FFD600] tracking-[2px] uppercase mb-2.5">
+                  TARGET REPOSITORY PATH
                 </label>
                 
                 {dataSource === 'mock' ? (
@@ -879,7 +887,7 @@ export default function Dashboard() {
                     <select
                       value={selectedRepoId}
                       onChange={(e) => setSelectedRepoId(e.target.value)}
-                      className="w-full bg-[#0A0A0A] border border-[#2D2D2D] text-xs font-mono text-[#F5F5F0] rounded p-3 pr-10 focus:outline-none focus:border-[#FFD600] cursor-pointer"
+                      className="w-full bg-[#0A0A0A] border-2 border-[#2D2D2D] text-xs font-ibm-mono text-[#F5F5F0] p-3 pr-10 focus:outline-none focus:border-[#FFD600] cursor-pointer"
                     >
                       {MOCK_REPOS.map(repo => (
                         <option key={repo.id} value={repo.id}>
@@ -887,22 +895,22 @@ export default function Dashboard() {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" size={14} />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888] pointer-events-none" size={16} />
                   </div>
                 ) : (
                   <input
                     type="text"
                     value={repoPathInput}
                     onChange={(e) => setRepoPathInput(e.target.value)}
-                    placeholder="Blank = bundled demo-repo · or paste a public GitHub URL"
-                    className="w-full bg-[#0A0A0A] border border-[#2D2D2D] text-xs font-mono text-[#F5F5F0] rounded p-3 focus:outline-none focus:border-[#FFD600]"
+                    placeholder="BLANK = BUNDLED DEMO-REPO · OR PASTE PUBLIC GITHUB URL"
+                    className="w-full bg-[#0A0A0A] border-2 border-[#2D2D2D] text-xs font-ibm-mono text-[#F5F5F0] p-3 focus:outline-none focus:border-[#FFD600]"
                   />
                 )}
 
-                <div className="mt-2 text-[11px] text-[#555555] font-mono leading-normal">
+                <div className="mt-2.5 text-[11px] text-[#777777] font-ibm-mono leading-normal tracking-[0.5px]">
                   {dataSource === 'mock' 
                     ? MOCK_REPOS.find(r => r.id === selectedRepoId)?.desc
-                    : "Accepts a public GitHub URL (https://github.com/owner/repo), a local folder path, or blank for the bundled demo-repo."
+                    : "ACCEPTS A PUBLIC GITHUB URL (https://github.com/owner/repo), A LOCAL FOLDER PATH, OR BLANK FOR THE BUNDLED DEMO-REPO."
                   }
                 </div>
               </div>
@@ -910,10 +918,10 @@ export default function Dashboard() {
               {/* Connect Button */}
               <button 
                 onClick={() => setScreen(1)}
-                className="group font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] tracking-[1.5px] px-8 py-3.5 hover:bg-[#F5F5F0] transition-colors flex items-center gap-2 rounded-sm"
+                className="group font-grotesk text-[12px] font-bold text-[#0A0A0A] bg-[#FFD600] tracking-[2px] px-8 h-[48px] hover:bg-[#e6c200] transition-colors flex items-center justify-center gap-2.5 shadow-md"
               >
                 CONNECT REPOSITORY
-                <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
           )}
@@ -926,7 +934,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-2xl mx-auto flex flex-col"
+              className="w-full max-w-[1000px] mx-auto flex flex-col py-6"
             >
               <h2 className="font-grotesk text-xl md:text-2xl font-bold tracking-wide mb-2 uppercase">
                 Who approves the purchase?

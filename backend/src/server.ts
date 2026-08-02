@@ -35,11 +35,21 @@ import {
 } from "./api/run-manager.js";
 
 const app = express();
-app.use(cors()); // hackathon scope: allow the Next.js dev origin
+app.use(cors());
 app.use(express.json());
 
 const DEFAULT_REPO = join(process.cwd(), "..", "demo-repo");
 const fixturesDir = join(process.cwd(), "src", "core", "fixtures");
+
+app.get("/", (_req, res) => {
+  res.json({
+    name: "Pay Right Backend API",
+    status: "online",
+    health: "/health",
+    catalog: "/api/catalog",
+    frontend: "http://localhost:3000",
+  });
+});
 
 app.get("/health", async (_req, res) => {
   res.json({
