@@ -31,7 +31,10 @@ import {
   LogOut,
   Lock,
   Zap,
-  UserCheck
+  UserCheck,
+  Mail,
+  PiggyBank,
+  BookOpen
 } from 'lucide-react';
 
 import { 
@@ -253,7 +256,10 @@ export default function Dashboard() {
             break;
           case 'completed':
             setScreen(6);
-            setIsPolling(false);
+            // Keep polling until the post-purchase deliverables (savings,
+            // deployment guide, receipt email) have landed — email_status is
+            // always the last field the backend fills in.
+            if (data.email_status) setIsPolling(false);
             break;
           case 'halted':
             setScreen(5); // Show rules check state with the halt reason
@@ -302,7 +308,12 @@ export default function Dashboard() {
     try {
       // The slider is real: it becomes this run's hard spend ceiling on the
       // backend (deterministic spend-ceiling rule, checked before Prava).
+      // The signed-in identity rides along so the receipt email knows where to go.
       const payload: any = { mode, wallet_limit_usd: limit };
+      if (authUser?.email) {
+        payload.user_email = authUser.email;
+        payload.user_name = authUser.name;
+      }
       if (repoPathInput.trim()) {
         payload.repo_path = repoPathInput.trim();
       }
@@ -1881,6 +1892,64 @@ export default function Dashboard() {
                     <div className="flex items-center gap-1.5"><Check size={11} className="text-[#22c55e]" /> Finding tracing verified</div>
                   </div>
                 </div>
+
+                {/* 4. Savings — deterministic money math (real runs) */}
+                {dataSource === 'real' && run?.savings && (
+                  <div className="border-t border-[#2D2D2D] pt-5">
+                    <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                      <PiggyBank size={12} className="text-[#FFD600]" /> What this saved you
+                    </h3>
+                    <p className="font-mono text-[11px] text-[#F5F5F0] leading-relaxed bg-[#FFD600]/5 border border-[#FFD600]/20 rounded p-3">
+                      {run.savings.headline}
+                    </p>
+                    {run.savings.avoided_traps?.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1">
+                        {run.savings.avoided_traps.map((t: any) => (
+                          <div key={`${t.provider}-${t.plan}`} className="font-mono text-[10px] text-[#888888]">
+                            <span className="text-[#FF6B35]">✗</span> {t.provider} {t.plan} (${t.price}/mo) — {t.fails}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 5. Deployment guide — written by the deploy-guide agent (real runs) */}
+                {dataSource === 'real' && (
+                  <div className="border-t border-[#2D2D2D] pt-5">
+                    <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                      <BookOpen size={12} className="text-[#FFD600]" /> Deployment guide for {run?.repo_name}
+                    </h3>
+                    {run?.deploy_guide ? (
+                      <pre className="whitespace-pre-wrap break-words font-mono text-[11px] text-[#c9c9c4] leading-relaxed bg-[#0A0A0A] border border-[#1D1D1D] rounded p-4 max-h-[320px] overflow-y-auto">
+                        {run.deploy_guide}
+                      </pre>
+                    ) : (
+                      <div className="flex items-center gap-2 font-mono text-[11px] text-[#888888] bg-[#0A0A0A] border border-dashed border-[#2D2D2D] rounded p-4">
+                        <Loader2 size={12} className="animate-spin text-[#FFD600]" />
+                        The deploy-guide agent is writing your step-by-step guide for this exact repo and plan...
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 6. Receipt email status (real runs) */}
+                {dataSource === 'real' && (
+                  <div className="border-t border-[#2D2D2D] pt-4 flex items-center gap-2 font-mono text-[10px]">
+                    <Mail size={12} className={run?.email_status?.startsWith('sent') ? 'text-[#22c55e]' : 'text-[#888888]'} />
+                    {run?.email_status ? (
+                      <span className={run.email_status.startsWith('sent') ? 'text-[#22c55e]' : 'text-[#888888]'}>
+                        {run.email_status.startsWith('sent')
+                          ? `Full receipt + deployment guide emailed — ${run.email_status}`
+                          : `Receipt email: ${run.email_status}`}
+                      </span>
+                    ) : (
+                      <span className="text-[#888888] flex items-center gap-1.5">
+                        <Loader2 size={10} className="animate-spin" /> Preparing your receipt email...
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Restart session button */}

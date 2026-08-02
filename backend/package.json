@@ -18,6 +18,7 @@
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
+    "nodemailer": "^9.0.3",
     "openai": "^5.0.0",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.25.2"
@@ -26,6 +27,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }

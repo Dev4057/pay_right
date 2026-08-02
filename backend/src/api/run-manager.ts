@@ -28,8 +28,11 @@ import type {
 import type { QuestionDef } from "../core/interview.js";
 import { runAnalyzer } from "../agents/analyzer.js";
 import { runInfraAgent } from "../agents/infra.js";
+import { writeDeployGuide } from "../agents/deploy-guide.js";
 import { executePurchase } from "../payments/executor.js";
 import { RepoTools } from "../agents/repo-tools.js";
+import { computeSavings, type SavingsSummary } from "../core/savings.js";
+import { isEmailConfigured, sendReceiptEmail } from "../notify/email.js";
 
 export type RunState =
   | "cloning"
@@ -68,6 +71,14 @@ interface Run {
   files: string[] | null;
   /** Spend ceiling for THIS run (dashboard slider). null = env default. */
   wallet_limit_usd: string | null;
+  /** Who signed in on the dashboard — the receipt email goes here. */
+  user_email: string | null;
+  user_name: string | null;
+  /** Post-purchase deliverables (filled after a successful payment). */
+  savings: SavingsSummary | null;
+  deploy_guide: string | null;
+  /** "sent to x" | "skipped (...)" | "failed: ..." — null until attempted. */
+  email_status: string | null;
   /** Internal deferred resolvers — never serialized to clients. */
   _resolveAnswers: ((answers: Record<string, string>) => void) | null;
   _resolveDecision: ((decision: ApprovalDecision) => void) | null;
@@ -120,7 +131,12 @@ export function listRuns(): RunView[] {
     .map(toView);
 }
 
-export function startRun(repoPathRaw: string, mode: RunMode, walletLimitUsd?: number): RunView {
+export function startRun(
+  repoPathRaw: string,
+  mode: RunMode,
+  walletLimitUsd?: number,
+  user?: { email?: string; name?: string }
+): RunView {
   const input = repoPathRaw.trim();
   let repo_path: string;
   let repo_name: string;
@@ -167,6 +183,11 @@ export function startRun(repoPathRaw: string, mode: RunMode, walletLimitUsd?: nu
     activity: [],
     files: null,
     wallet_limit_usd: walletLimitUsd != null ? walletLimitUsd.toFixed(2) : null,
+    user_email: user?.email ?? null,
+    user_name: user?.name ?? null,
+    savings: null,
+    deploy_guide: null,
+    email_status: null,
     _resolveAnswers: null,
     _resolveDecision: null,
   };
@@ -287,6 +308,7 @@ async function drive(run: Run): Promise<void> {
     });
     run.rules = outcome.rules;
     run.receipt = outcome.receipt;
+    run.email_status = "skipped (proposal rejected — nothing was purchased)";
     touch(run, "rejected");
     return;
   }
@@ -315,7 +337,53 @@ async function drive(run: Run): Promise<void> {
       ? `rules: 4/4 passed -> ${outcome.receipt.status}`
       : `rules: BLOCKED at ${failed[0]!.rule} -> HALTED`
   );
-  touch(run, outcome.receipt.status === "APPROVED" ? "completed" : "halted");
+
+  if (outcome.receipt.status !== "APPROVED") {
+    run.email_status = "skipped (run halted — nothing was purchased)";
+    touch(run, "halted");
+    return;
+  }
+
+  // 5. Post-purchase deliverables. Savings math is deterministic and instant,
+  //    so it is ready the moment the receipt appears; the deployment guide and
+  //    the email land seconds later (the frontend keeps polling for them).
+  //    Every step is non-fatal — the purchase already succeeded.
+  run.savings = computeSavings(report, proposal);
+  act(run, `savings: ${run.savings.headline}`);
+  touch(run, "completed");
+
+  try {
+    act(run, "deploy-guide agent: writing the deployment guide for this repo + plan");
+    run.deploy_guide = await writeDeployGuide(report, proposal, run.repo_name);
+    act(run, "deployment guide ready");
+  } catch (e) {
+    act(run, `deployment guide failed (non-fatal): ${(e as Error).message}`);
+  }
+
+  if (!run.user_email) {
+    run.email_status = "skipped (no signed-in email on this run)";
+  } else if (!isEmailConfigured()) {
+    run.email_status = "skipped (SMTP not configured on the backend)";
+  } else {
+    try {
+      await sendReceiptEmail({
+        to: run.user_email,
+        userName: run.user_name ?? "there",
+        repoName: run.repo_name,
+        report,
+        proposal,
+        receipt: run.receipt!,
+        savings: run.savings,
+        deployGuide: run.deploy_guide,
+      });
+      run.email_status = `sent to ${run.user_email}`;
+      act(run, `receipt email sent to ${run.user_email}`);
+    } catch (e) {
+      run.email_status = `failed: ${(e as Error).message}`;
+      act(run, `receipt email failed (non-fatal): ${(e as Error).message}`);
+    }
+  }
+  touch(run);
 }
 
 export function submitAnswers(
