@@ -28,6 +28,7 @@ import { health as pravaHealth } from "./payments/prava.js";
 import {
   getRun,
   listRuns,
+  startDeploy,
   startRun,
   submitAnswers,
   submitDecision,
@@ -49,6 +50,8 @@ app.get("/health", async (_req, res) => {
     wallet_limit_usd: env.WALLET_LIMIT_USD,
     assigned_category: env.ASSIGNED_CATEGORY,
     model: env.OPENAI_MODEL,
+    deploy_mode: env.DEPLOY_MODE,
+    render_key_present: Boolean(env.RENDER_API_KEY),
   });
 });
 
@@ -143,6 +146,16 @@ app.post("/api/runs/:id/decision", (req, res) => {
     return;
   }
   res.json({ ok: true });
+});
+
+// Deploy rail: plan + (dry-run | live) deploy of a completed purchase.
+app.post("/api/runs/:id/deploy", (req, res) => {
+  const result = startDeploy(req.params.id);
+  if (!result.ok) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  res.status(202).json({ ok: true });
 });
 
 const PORT = Number(process.env.PORT ?? 4000);

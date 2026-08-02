@@ -254,13 +254,16 @@ export default function Dashboard() {
           case 'executing':
             setScreen(5);
             break;
-          case 'completed':
+          case 'completed': {
             setScreen(6);
             // Keep polling until the post-purchase deliverables (savings,
-            // deployment guide, receipt email) have landed — email_status is
-            // always the last field the backend fills in.
-            if (data.email_status) setIsPolling(false);
+            // deployment guide, receipt email) have landed — and while a
+            // deploy is running in the console.
+            const deployBusy =
+              data.deploy && (data.deploy.status === 'planning' || data.deploy.status === 'deploying');
+            if (data.email_status && !deployBusy) setIsPolling(false);
             break;
+          }
           case 'halted':
             setScreen(5); // Show rules check state with the halt reason
             setIsPolling(false);
@@ -400,6 +403,22 @@ export default function Dashboard() {
       } else {
         setScreen(5);
       }
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    }
+  };
+
+  // --- Handle Action: Deploy the purchased infra (dry-run or live) ---
+  const handleDeploy = async () => {
+    if (!runId) return;
+    setErrorMessage(null);
+    try {
+      const res = await fetch(`http://localhost:4000/api/runs/${runId}/deploy`, { method: 'POST' });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Could not start the deployment');
+      }
+      setIsPolling(true); // watch the deploy console stream in
     } catch (err: any) {
       setErrorMessage(err.message);
     }
@@ -1947,6 +1966,73 @@ export default function Dashboard() {
                       <span className="text-[#888888] flex items-center gap-1.5">
                         <Loader2 size={10} className="animate-spin" /> Preparing your receipt email...
                       </span>
+                    )}
+                  </div>
+                )}
+
+                {/* 7. Deploy console — the agent deploys onto the purchased infra */}
+                {dataSource === 'real' && backendHealth?.deploy_mode !== 'off' && (
+                  <div className="border-t border-[#2D2D2D] pt-5">
+                    <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                      <Terminal size={12} className="text-[#FFD600]" /> Deploy — close the loop
+                    </h3>
+
+                    {!run?.deploy ? (
+                      <div className="bg-[#0A0A0A] border border-[#1D1D1D] rounded p-4">
+                        <p className="font-mono text-[11px] text-[#888888] leading-relaxed mb-3">
+                          The purchase is done — now the Deployer Agent can plan the deployment from the
+                          same requirements report and put this repo live on a free-tier environment.
+                          {backendHealth?.deploy_mode === 'dry-run' && (
+                            <span className="text-[#555555]"> Backend is in dry-run mode: it will show every API call it would make, without executing any.</span>
+                          )}
+                        </p>
+                        <button
+                          onClick={handleDeploy}
+                          className="font-grotesk text-[10px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm flex items-center gap-2"
+                        >
+                          <Zap size={12} />
+                          {backendHealth?.deploy_mode === 'live' ? 'Deploy live now' : 'Plan deployment (dry-run)'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-[#0A0A0A] border border-[#1D1D1D] rounded p-4">
+                        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider mb-3">
+                          {(run.deploy.status === 'planning' || run.deploy.status === 'deploying') ? (
+                            <><Loader2 size={11} className="animate-spin text-[#FFD600]" /><span className="text-[#FFD600]">{run.deploy.status}...</span></>
+                          ) : run.deploy.status === 'live' ? (
+                            <><Check size={11} className="text-[#22c55e]" /><span className="text-[#22c55e]">LIVE</span></>
+                          ) : run.deploy.status === 'dry-run-complete' ? (
+                            <><Check size={11} className="text-[#FFD600]" /><span className="text-[#FFD600]">Dry-run complete</span></>
+                          ) : (
+                            <><ShieldAlert size={11} className="text-[#FF6B35]" /><span className="text-[#FF6B35]">{run.deploy.status}</span></>
+                          )}
+                          <span className="text-[#555] ml-auto">mode: {run.deploy.mode}</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto font-mono text-[10px] text-[#c9c9c4] leading-relaxed">
+                          {run.deploy.steps.map((s: string, i: number) => (
+                            <div key={i} className="border-b border-[#141414] pb-1 break-words">{s}</div>
+                          ))}
+                        </div>
+                        {run.deploy.service_url && (
+                          <a
+                            href={run.deploy.service_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 font-grotesk text-[10px] font-bold text-[#0A0A0A] bg-[#22c55e] hover:bg-[#F5F5F0] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm mt-3"
+                          >
+                            Open the live app
+                            <ExternalLink size={12} />
+                          </a>
+                        )}
+                        {(run.deploy.status === 'dry-run-complete' || run.deploy.status === 'failed') && (
+                          <button
+                            onClick={handleDeploy}
+                            className="font-grotesk text-[10px] font-bold text-[#888888] hover:text-[#F5F5F0] border border-[#2D2D2D] px-4 py-2 transition-colors uppercase tracking-wider rounded-sm mt-3 ml-2"
+                          >
+                            Run again
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

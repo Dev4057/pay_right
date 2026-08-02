@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/core/load-math.test.ts src/core/proposal-checks.test.ts src/core/rules.test.ts src/payments/executor.test.ts",
+    "test": "tsx --test src/core/load-math.test.ts src/core/proposal-checks.test.ts src/core/rules.test.ts src/payments/executor.test.ts src/deploy/executor.test.ts",
     "validate:fixtures": "tsx src/scripts/validate-fixtures.ts",
     "analyze": "tsx src/scripts/run-analyzer.ts",
     "infra": "tsx src/scripts/run-infra.ts",

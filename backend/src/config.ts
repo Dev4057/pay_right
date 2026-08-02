@@ -29,6 +29,12 @@ const Env = z.object({
   SMTP_PASS: z.string().optional(),
   /** From header; defaults to SMTP_USER. */
   SMTP_FROM: z.string().optional(),
+  /** Render deploy rail. Modes:
+   *  off     — deploy feature hidden entirely
+   *  dry-run — plan the deploy + show the exact API calls, execute NOTHING (default)
+   *  live    — really provision on Render's free tier (demo day only) */
+  DEPLOY_MODE: z.enum(["off", "dry-run", "live"]).default("dry-run"),
+  RENDER_API_KEY: z.string().optional(),
 });
 
 export const env = Env.parse(process.env);

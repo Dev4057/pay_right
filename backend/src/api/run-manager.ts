@@ -29,10 +29,13 @@ import type { QuestionDef } from "../core/interview.js";
 import { runAnalyzer } from "../agents/analyzer.js";
 import { runInfraAgent } from "../agents/infra.js";
 import { writeDeployGuide } from "../agents/deploy-guide.js";
+import { planDeploy } from "../agents/deployer.js";
 import { executePurchase } from "../payments/executor.js";
+import { deployModeFromEnv, executeDeploy } from "../deploy/executor.js";
 import { RepoTools } from "../agents/repo-tools.js";
 import { computeSavings, type SavingsSummary } from "../core/savings.js";
 import { isEmailConfigured, sendReceiptEmail } from "../notify/email.js";
+import type { DeploySpec } from "../core/contract.js";
 
 export type RunState =
   | "cloning"
@@ -48,6 +51,15 @@ export type RunState =
   | "error";
 
 export type RunMode = "approval" | "autonomy";
+
+/** The deployment console's state, streamed to the UI while it runs. */
+export interface DeployState {
+  status: "planning" | "deploying" | "dry-run-complete" | "live" | "refused" | "failed";
+  mode: "dry-run" | "live";
+  steps: string[];
+  service_url: string | null;
+  error: string | null;
+}
 
 interface Run {
   id: string;
@@ -79,6 +91,10 @@ interface Run {
   deploy_guide: string | null;
   /** "sent to x" | "skipped (...)" | "failed: ..." — null until attempted. */
   email_status: string | null;
+  /** The Deployer Agent's validated plan (cached across deploy attempts). */
+  deploy_spec: DeploySpec | null;
+  /** Live deploy console state — null until the user presses Deploy. */
+  deploy: DeployState | null;
   /** Internal deferred resolvers — never serialized to clients. */
   _resolveAnswers: ((answers: Record<string, string>) => void) | null;
   _resolveDecision: ((decision: ApprovalDecision) => void) | null;
@@ -188,6 +204,8 @@ export function startRun(
     savings: null,
     deploy_guide: null,
     email_status: null,
+    deploy_spec: null,
+    deploy: null,
     _resolveAnswers: null,
     _resolveDecision: null,
   };
@@ -410,6 +428,83 @@ export function submitAnswers(
     }
   }
   run._resolveAnswers(answers);
+  return { ok: true };
+}
+
+/**
+ * Kick off the deploy rail for a completed run (user pressed "Deploy").
+ * Async fire-and-forget like drive(); the UI polls run.deploy for progress.
+ *
+ * Guards: the run must be completed with an APPROVED receipt, the repo must
+ * be a public GitHub URL (that's what Render builds from), DEPLOY_MODE must
+ * not be off, and no deploy may already be in flight. Re-triggering after a
+ * terminal outcome IS allowed — dry-run first, live on demo day.
+ */
+export function startDeploy(id: string): { ok: true } | { ok: false; error: string; status: number } {
+  const run = runs.get(id);
+  if (!run) return { ok: false, error: "run not found", status: 404 };
+  if (run.state !== "completed" || !run.receipt || !run.proposal || !run.report) {
+    return { ok: false, error: `run is in state "${run.state}" — only a completed purchase can be deployed`, status: 409 };
+  }
+  const mode = deployModeFromEnv();
+  if (mode === "off") {
+    return { ok: false, error: "deployments are disabled on this backend (DEPLOY_MODE=off)", status: 409 };
+  }
+  if (!isGithubUrl(run.repo_path)) {
+    return { ok: false, error: "only runs started from a public GitHub URL can be deployed (Render builds from the repo)", status: 409 };
+  }
+  if (run.deploy && (run.deploy.status === "planning" || run.deploy.status === "deploying")) {
+    return { ok: false, error: "a deploy is already in progress for this run", status: 409 };
+  }
+
+  const deploy: DeployState = { status: "planning", mode, steps: [], service_url: null, error: null };
+  run.deploy = deploy;
+  const step = (line: string) => {
+    deploy.steps.push(line);
+    touch(run);
+  };
+
+  void (async () => {
+    try {
+      // 1. Plan (Deployer Agent) — reuse a cached spec so re-runs are instant.
+      if (!run.deploy_spec) {
+        act(run, "deployer agent: planning the deployment from the requirements report");
+        step("deployer agent: reading the requirements report...");
+        const { spec } = await planDeploy(run.report!, run.repo_name, (line) => step(line));
+        run.deploy_spec = spec;
+      } else {
+        step("using the previously validated deploy spec");
+      }
+
+      // 2. Execute (deterministic) — dry-run narrates, live provisions.
+      deploy.status = "deploying";
+      act(run, `deploy executor: ${mode} run for ${run.repo_name}`);
+      const outcome = await executeDeploy({
+        spec: run.deploy_spec,
+        proposal: run.proposal!,
+        receipt: run.receipt!,
+        repoUrl: run.repo_path,
+        mode,
+        onProgress: (line) => step(line),
+      });
+      deploy.status = outcome.status;
+      deploy.service_url = outcome.service_url;
+      deploy.error = outcome.error;
+      act(
+        run,
+        outcome.status === "live"
+          ? `DEPLOYED — ${outcome.service_url}`
+          : `deploy finished: ${outcome.status}`
+      );
+    } catch (e) {
+      deploy.status = "failed";
+      deploy.error = (e as Error).message;
+      deploy.steps.push(`DEPLOY FAILED: ${deploy.error}`);
+      act(run, `deploy failed: ${deploy.error}`);
+    }
+    touch(run);
+  })();
+
   return { ok: true };
 }
 

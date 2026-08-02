@@ -100,6 +100,19 @@ Every question in `run.questions` must be answered with one of its **exact** `op
 Body: `{ "decision": "approved" | "rejected", "note": "optional" }`
 `409` if the run isn't in `awaiting_decision`. (Autonomy-mode runs never enter that state.)
 
+### `POST /api/runs/:id/deploy` — deploy the purchased infra (the third act)
+No body. Only valid on a `completed` run started from a **public GitHub URL**.
+The Deployer Agent plans a `DeploySpec` from the report (validated + finding-cited),
+then the deterministic executor runs it per the backend's `DEPLOY_MODE`:
+- `dry-run` (default) — narrates every Render API call it WOULD make, executes none
+- `live` — really provisions on Render's free tier (free Postgres too, if the report demands it)
+- `off` — endpoint returns 409
+Returns `202`; poll the run. `run.deploy` streams in:
+`{ status: "planning" | "deploying" | "dry-run-complete" | "live" | "refused" | "failed",
+   mode, steps: string[], service_url, error }`
+`run.deploy_spec` holds the validated plan. Re-triggering after a terminal status is allowed
+(dry-run rehearsals, then live on demo day). A non-APPROVED receipt is always refused.
+
 ### `GET /api/runs` — list all runs (newest first): `{ "runs": [...] }`
 
 ### Static helpers

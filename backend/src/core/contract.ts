@@ -264,6 +264,17 @@ export const validateProposal = (data: unknown) =>
 export const validateReceipt = (data: unknown) =>
   validate(TransactionReceipt, data, "TransactionReceipt");
 
+/** Every finding id that exists in a report — the universe citations may use. */
+export function knownFindingIds(report: RequirementsReport): Set<string> {
+  return new Set<string>([
+    report.runtime.id,
+    report.database.id,
+    report.concurrency.id,
+    report.load_class.id,
+    ...report.special_needs.map((f) => f.id),
+  ]);
+}
+
 /**
  * Cross-schema check backing the traceability rule: every finding id cited in
  * the proposal's reasoning must exist in the report.
@@ -272,14 +283,56 @@ export function citedFindingsExist(
   proposal: PurchaseProposal,
   report: RequirementsReport
 ): { ok: boolean; missing: string[] } {
-  const known = new Set<string>([
-    report.runtime.id,
-    report.database.id,
-    report.concurrency.id,
-    report.load_class.id,
-    ...report.special_needs.map((f) => f.id),
-  ]);
+  const known = knownFindingIds(report);
   const cited = proposal.reasoning.flatMap((r) => r.finding_ids);
+  const missing = [...new Set(cited.filter((id) => !known.has(id)))];
+  return { ok: missing.length === 0, missing };
+}
+
+/* ------------------------------------------------------------------ */
+/* Deploy spec (Deployer Agent output)                                 */
+/*                                                                     */
+/* Written by an LLM, but every field is validated here and every      */
+/* reasoning entry must cite report findings — the deploy inherits     */
+/* the same traceability discipline as the purchase.                   */
+/* ------------------------------------------------------------------ */
+
+export const DeployEnvVar = z.object({
+  key: z.string().regex(/^[A-Z][A-Z0-9_]*$/, "SCREAMING_SNAKE_CASE env var name"),
+  /** Literal value; empty string when the source fills it in later. */
+  value: z.string(),
+  source: z.enum([
+    "literal", // a safe, non-secret value the agent chose (e.g. NODE_ENV=production)
+    "postgres-connection", // filled by the executor from the database it provisions
+    "user-must-set", // a real secret — the agent must NEVER invent these
+  ]),
+});
+
+export const DeploySpec = z.object({
+  /** Render service name — lowercase slug derived from the repo name. */
+  service_name: z.string().regex(/^[a-z][a-z0-9-]{1,40}$/),
+  runtime: z.enum(["node", "python", "go", "ruby", "rust", "elixir", "docker"]),
+  branch: z.string().min(1),
+  build_command: z.string().min(1),
+  start_command: z.string().min(1),
+  needs_postgres: z.boolean(),
+  env_vars: z.array(DeployEnvVar),
+  /** Path the executor hits to verify the service is alive (must start with /). */
+  health_path: z.string().regex(/^\//),
+  /** Same Reason shape as the proposal: every entry cites finding ids. */
+  reasoning: z.array(Reason).min(1),
+});
+export type DeploySpec = z.infer<typeof DeploySpec>;
+
+export const validateDeploySpec = (data: unknown) => validate(DeploySpec, data, "DeploySpec");
+
+/** Traceability for the deploy spec — citations must exist in the report. */
+export function deployCitationsExist(
+  spec: DeploySpec,
+  report: RequirementsReport
+): { ok: boolean; missing: string[] } {
+  const known = knownFindingIds(report);
+  const cited = spec.reasoning.flatMap((r) => r.finding_ids);
   const missing = [...new Set(cited.filter((id) => !known.has(id)))];
   return { ok: missing.length === 0, missing };
 }
