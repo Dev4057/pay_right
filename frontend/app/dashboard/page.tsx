@@ -936,10 +936,10 @@ export default function Dashboard() {
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-[1280px] mx-auto flex flex-col py-4"
             >
-              <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide mb-2 uppercase">
+              <h2 className="font-grotesk text-2xl md:text-4xl font-bold tracking-wide mb-3 uppercase text-[#F5F5F0]">
                 Who approves the purchase?
               </h2>
-              <p className="text-xs md:text-sm text-[#888888] mb-8 font-ibm-mono leading-relaxed">
+              <p className="text-sm md:text-base text-[#D4D4D4] mb-8 font-ibm-mono leading-relaxed max-w-[900px]">
                 The agent scans your repo, asks a few questions, and picks the cheapest hosting
                 plan that truly fits. Before any money moves, choose who gives the final go-ahead.
               </p>
@@ -949,39 +949,39 @@ export default function Dashboard() {
                 {/* Approval Mode */}
                 <div
                   onClick={() => setMode('approval')}
-                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
+                  className={`bg-[#0F0F0F] border p-6 md:p-8 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
                     mode === 'approval'
-                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]'
-                      : 'border-[#2D2D2D] opacity-60 hover:opacity-90'
+                      ? 'border-[#FFD600] shadow-[0_0_20px_rgba(255,214,0,0.12)]'
+                      : 'border-[#333333] hover:border-[#666666]'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
-                      <UserCheck size={14} className="text-[#FFD600]" />
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-grotesk text-sm md:text-base font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
+                      <UserCheck size={16} className="text-[#FFD600]" />
                       Approval Mode
                     </span>
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                      mode === 'approval' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
+                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      mode === 'approval' ? 'border-[#FFD600] bg-[#FFD600]/20' : 'border-[#666666]'
                     }`}>
-                      {mode === 'approval' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
+                      {mode === 'approval' && <span className="w-2 h-2 rounded-full bg-[#FFD600]" />}
                     </span>
                   </div>
-                  <p className="font-mono text-[10px] text-[#888888] mb-4">You get the final say.</p>
-                  <ol className="flex flex-col gap-2.5 font-mono text-[10px] text-[#888888] leading-relaxed">
-                    <li className="flex gap-2.5">
+                  <p className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] mb-5">You get the final say.</p>
+                  <ol className="flex flex-col gap-3 font-ibm-mono text-xs md:text-sm text-[#E5E5E5] leading-relaxed">
+                    <li className="flex gap-3">
                       <span className="text-[#FFD600] font-bold shrink-0">1</span>
-                      Agent scans your code and recommends a plan with evidence
+                      <span>Agent scans your code and recommends a plan with evidence</span>
                     </li>
-                    <li className="flex gap-2.5">
+                    <li className="flex gap-3">
                       <span className="text-[#FFD600] font-bold shrink-0">2</span>
-                      <span><span className="text-[#F5F5F0]">You review the reasoning</span> and click Approve or Reject</span>
+                      <span><span className="text-[#FFFFFF] font-semibold">You review the reasoning</span> and click Approve or Reject</span>
                     </li>
-                    <li className="flex gap-2.5">
+                    <li className="flex gap-3">
                       <span className="text-[#FFD600] font-bold shrink-0">3</span>
-                      You confirm the payment with your Prava passkey
+                      <span>You confirm the payment with your Prava passkey</span>
                     </li>
                   </ol>
-                  <span className="font-mono text-[9px] text-[#FFD600] tracking-wider uppercase mt-4 pt-3 border-t border-[#1D1D1D]">
+                  <span className="font-ibm-mono text-xs text-[#FFD600] font-bold tracking-wider uppercase mt-6 pt-4 border-t border-[#262626]">
                     Recommended — 2 human checkpoints
                   </span>
                 </div>
@@ -989,55 +989,55 @@ export default function Dashboard() {
                 {/* Autonomy Mode */}
                 <div
                   onClick={() => setMode('autonomy')}
-                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
+                  className={`bg-[#0F0F0F] border p-6 md:p-8 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
                     mode === 'autonomy'
-                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]'
-                      : 'border-[#2D2D2D] opacity-60 hover:opacity-90'
+                      ? 'border-[#FFD600] shadow-[0_0_20px_rgba(255,214,0,0.12)]'
+                      : 'border-[#333333] hover:border-[#666666]'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
-                      <Zap size={14} className="text-[#FF6B35]" />
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-grotesk text-sm md:text-base font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
+                      <Zap size={16} className="text-[#FF6B35]" />
                       Full Autonomy Mode
                     </span>
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                      mode === 'autonomy' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
+                    <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      mode === 'autonomy' ? 'border-[#FFD600] bg-[#FFD600]/20' : 'border-[#666666]'
                     }`}>
-                      {mode === 'autonomy' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
+                      {mode === 'autonomy' && <span className="w-2 h-2 rounded-full bg-[#FFD600]" />}
                     </span>
                   </div>
-                  <p className="font-mono text-[10px] text-[#888888] mb-4">The agent decides for you.</p>
-                  <ol className="flex flex-col gap-2.5 font-mono text-[10px] text-[#888888] leading-relaxed">
-                    <li className="flex gap-2.5">
+                  <p className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] mb-5">The agent decides for you.</p>
+                  <ol className="flex flex-col gap-3 font-ibm-mono text-xs md:text-sm text-[#E5E5E5] leading-relaxed">
+                    <li className="flex gap-3">
                       <span className="text-[#FF6B35] font-bold shrink-0">1</span>
-                      Agent scans your code and picks the plan on its own
+                      <span>Agent scans your code and picks the plan on its own</span>
                     </li>
-                    <li className="flex gap-2.5">
+                    <li className="flex gap-3">
                       <span className="text-[#FF6B35] font-bold shrink-0">2</span>
-                      <span><span className="text-[#F5F5F0]">No approval screen</span> — the decision is auto-signed within your spend cap</span>
+                      <span><span className="text-[#FFFFFF] font-semibold">No approval screen</span> — the decision is auto-signed within your spend cap</span>
                     </li>
-                    <li className="flex gap-2.5">
+                    <li className="flex gap-3">
                       <span className="text-[#FF6B35] font-bold shrink-0">3</span>
-                      One Prava passkey tap releases the money — that&apos;s payment security, not a decision, and the agent can never skip it
+                      <span>One Prava passkey tap releases the money — that&apos;s payment security, not a decision</span>
                     </li>
                   </ol>
-                  <span className="font-mono text-[9px] text-[#FF6B35] tracking-wider uppercase mt-4 pt-3 border-t border-[#1D1D1D]">
+                  <span className="font-ibm-mono text-xs text-[#FF6B35] font-bold tracking-wider uppercase mt-6 pt-4 border-t border-[#262626]">
                     Skips human review — cap still enforced by code
                   </span>
                 </div>
               </div>
 
               {/* Guardrails — the limits that hold in BOTH modes */}
-              <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-8 mb-8 flex flex-col gap-6">
-                <div className="font-grotesk text-[11px] font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2 -mb-2">
-                  <Shield size={13} className="text-[#FFD600]" />
+              <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 md:p-8 mb-8 flex flex-col gap-6">
+                <div className="font-grotesk text-xs md:text-sm font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
+                  <Shield size={16} className="text-[#FFD600]" />
                   Guardrails — enforced by code in both modes
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-mono text-[10px] text-[#555555] tracking-wider uppercase">Hard spend ceiling (per month)</span>
-                    <span className="font-mono text-xs font-bold text-[#FFD600] bg-[#FFD600]/10 px-2 py-0.5 rounded border border-[#FFD600]/25">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-ibm-mono text-xs font-bold text-[#D4D4D4] tracking-wider uppercase">Hard spend ceiling (per month)</span>
+                    <span className="font-ibm-mono text-sm font-bold text-[#FFD600] bg-[#FFD600]/10 px-3 py-1 rounded border border-[#FFD600]/30">
                       ${limit} USD
                     </span>
                   </div>
@@ -1048,30 +1048,30 @@ export default function Dashboard() {
                     step="5"
                     value={limit}
                     onChange={(e) => setLimit(Number(e.target.value))}
-                    className="w-full accent-[#FFD600] bg-[#1D1D1D] rounded-lg appearance-none h-1.5 cursor-pointer"
+                    className="w-full accent-[#FFD600] bg-[#222222] rounded-lg appearance-none h-2 cursor-pointer"
                   />
-                  <div className="flex justify-between text-[9px] text-[#555555] font-mono mt-1">
+                  <div className="flex justify-between text-xs text-[#A3A3A3] font-ibm-mono mt-2 font-bold">
                     <span>$5</span>
                     <span>$50</span>
                     <span>$100</span>
                   </div>
-                  <p className="mt-2.5 text-[10px] text-[#888888] font-mono leading-relaxed">
-                    Any plan priced above this <span className="text-[#F5F5F0]">halts the run before Prava is ever contacted</span> —
+                  <p className="mt-3 text-xs md:text-sm text-[#D4D4D4] font-ibm-mono leading-relaxed">
+                    Any plan priced above this <span className="text-[#FFFFFF] font-bold underline decoration-[#FFD600]">halts the run before Prava is ever contacted</span> —
                     checked by deterministic code the AI cannot override.
-                    <span className="text-[#555555]"> (Most recommended plans cost $5–$25. Set this below the price to watch a live CAP_EXCEEDED halt.)</span>
+                    <span className="text-[#A3A3A3]"> (Most recommended plans cost $5–$25. Set this below the price to watch a live CAP_EXCEEDED halt.)</span>
                   </p>
                 </div>
 
                 <div>
-                  <span className="block font-mono text-[10px] text-[#555555] tracking-wider uppercase mb-2">
+                  <span className="block font-ibm-mono text-xs font-bold text-[#D4D4D4] tracking-wider uppercase mb-2.5">
                     Purchase category
                   </span>
-                  <div className="flex items-center gap-2.5 bg-[#0A0A0A] border border-[#2D2D2D] rounded p-2.5">
-                    <Lock size={12} className="text-[#FFD600] shrink-0" />
-                    <span className="font-mono text-xs text-[#F5F5F0]">Hosting</span>
-                    <span className="font-mono text-[9px] text-[#555555] uppercase tracking-wider ml-auto">Locked</span>
+                  <div className="flex items-center gap-3 bg-[#0A0A0A] border border-[#333333] rounded p-3">
+                    <Lock size={14} className="text-[#FFD600] shrink-0" />
+                    <span className="font-ibm-mono text-sm font-bold text-[#F5F5F0]">Hosting</span>
+                    <span className="font-ibm-mono text-xs text-[#FFD600] font-bold uppercase tracking-wider ml-auto bg-[#FFD600]/10 px-2 py-0.5 rounded">Locked</span>
                   </div>
-                  <p className="mt-2 text-[10px] text-[#888888] font-mono leading-relaxed">
+                  <p className="mt-2.5 text-xs md:text-sm text-[#D4D4D4] font-ibm-mono leading-relaxed">
                     This agent&apos;s mandate covers hosting only. If it ever proposed anything else,
                     the category-lock rule halts the purchase automatically.
                   </p>
@@ -1079,16 +1079,16 @@ export default function Dashboard() {
               </div>
 
               {/* Navigation buttons */}
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-4">
                 <button 
                   onClick={() => setScreen(0)}
-                  className="font-grotesk text-[10px] font-bold text-[#888888] hover:text-[#F5F5F0] bg-transparent border border-[#2D2D2D] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm"
+                  className="font-grotesk text-xs md:text-sm font-bold text-[#D4D4D4] hover:text-[#FFFFFF] bg-transparent border border-[#333333] hover:border-[#666666] px-6 py-3 transition-colors uppercase tracking-wider rounded-sm"
                 >
                   Back
                 </button>
                 <button 
                   onClick={handleStartScan}
-                  className="font-grotesk text-[10px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-6 py-2.5 transition-colors uppercase tracking-wider rounded-sm"
+                  className="font-grotesk text-xs md:text-sm font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#e6c200] px-8 py-3 transition-colors uppercase tracking-wider rounded-sm shadow-md"
                 >
                   Continue to Scan
                 </button>
@@ -1764,6 +1764,17 @@ export default function Dashboard() {
                     {paymentStep}
                   </motion.div>
                 )}
+
+                {/* Subtle Analyze Another Repo button */}
+                <div className="border-t border-[#1D1D1D] pt-4 mt-3 flex justify-center">
+                  <button 
+                    onClick={handleRestart}
+                    className="font-ibm-mono text-[11px] text-[#888888] hover:text-[#FFD600] bg-transparent border border-[#2D2D2D] hover:border-[#666666] px-4 py-2 transition-colors uppercase tracking-[1.5px] rounded-sm cursor-pointer flex items-center gap-2"
+                  >
+                    <RotateCcw size={12} />
+                    ANALYZE ANOTHER REPO
+                  </button>
+                </div>
               </div>
 
               {/* Halted Variant UI */}
