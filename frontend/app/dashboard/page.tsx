@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Settings, 
@@ -25,7 +26,12 @@ import {
   FileText,
   RotateCcw,
   RefreshCw,
-  Loader2
+  Loader2,
+  User,
+  LogOut,
+  Lock,
+  Zap,
+  UserCheck
 } from 'lucide-react';
 
 import { 
@@ -260,7 +266,9 @@ export default function Dashboard() {
     }
 
     try {
-      const payload: any = { mode };
+      // The slider is real: it becomes this run's hard spend ceiling on the
+      // backend (deterministic spend-ceiling rule, checked before Prava).
+      const payload: any = { mode, wallet_limit_usd: limit };
       if (repoPathInput.trim()) {
         payload.repo_path = repoPathInput.trim();
       }
@@ -352,12 +360,46 @@ export default function Dashboard() {
     }
   };
 
+  // --- Auth guard: dashboard requires a signed-in user (demo-grade auth) ---
+  const router = useRouter();
+  const [authUser, setAuthUser] = useState<{ name: string; email: string } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('pr_user');
+      if (!raw) {
+        router.replace('/login');
+        return;
+      }
+      setAuthUser(JSON.parse(raw));
+    } catch {
+      router.replace('/login');
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('pr_user');
+    router.replace('/login');
+  };
+
   // --- Auto-scroll logs terminal (mock logs + real activity rail) ---
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs, run?.activity?.length]);
+
+  // --- Real mode: track which file the agent is currently reading, so the
+  //     real file tree highlights it exactly like the mock does ---
+  useEffect(() => {
+    if (dataSource !== 'real' || !run?.activity?.length) return;
+    for (let i = run.activity.length - 1; i >= 0; i--) {
+      const m = /read_file\(([^)]+)\)/.exec(run.activity[i]);
+      if (m) {
+        setCurrentScanningFile(m[1]);
+        return;
+      }
+    }
+  }, [dataSource, run?.activity?.length]);
 
   // --- Mock Scan Step Simulation ---
   useEffect(() => {
@@ -605,6 +647,62 @@ export default function Dashboard() {
     );
   };
 
+  // --- Build a FileNode tree from the backend's flat file list (real mode) ---
+  const buildTree = (paths: string[]): FileNode[] => {
+    const root: FileNode[] = [];
+    for (const path of paths) {
+      const parts = path.split('/');
+      let level = root;
+      let acc = '';
+      for (let i = 0; i < parts.length; i++) {
+        acc = acc ? `${acc}/${parts[i]}` : parts[i];
+        const isFile = i === parts.length - 1;
+        let node = level.find(n => n.path === acc);
+        if (!node) {
+          node = { name: parts[i], path: acc, type: isFile ? 'file' : 'dir', ...(isFile ? {} : { children: [] }) };
+          level.push(node);
+        }
+        if (!isFile) level = node.children!;
+      }
+    }
+    const sortLevel = (nodes: FileNode[]) => {
+      nodes.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'dir' ? -1 : 1));
+      nodes.forEach(n => n.children && sortLevel(n.children));
+    };
+    sortLevel(root);
+    return root;
+  };
+  const realTree: FileNode[] = React.useMemo(
+    () => (run?.files?.length ? buildTree(run.files) : []),
+    [run?.files]
+  );
+
+  // --- Turn raw agent activity lines into readable terminal entries.
+  //     One tool call per line, mock-terminal style. ---
+  const prettifyActivity = (line: string): { text: string; kind: 'read' | 'scan' | 'milestone' | 'error' | 'info' }[] => {
+    const body = line.replace(/^\d{2}:\d{2}:\d{2}\s+/, '');
+    if (/BLOCKED|FAILED|failed/i.test(body)) return [{ text: body, kind: 'error' }];
+    if (/report ready|proposal:|4\/4 passed|Prava session|indexed \d+ files|load interview|answers received|clone complete|cloning /.test(body)) {
+      return [{ text: body, kind: 'milestone' }];
+    }
+    if (/read_file|search_code|list_files|ask_user/.test(body)) {
+      return body.split(', ').map(call => {
+        const read = /read_file\(([^)]+)\)/.exec(call);
+        if (read) return { text: `Reading ${read[1]}...`, kind: 'read' as const };
+        const search = /search_code\(\/(.+)\/\)/.exec(call);
+        if (search) return { text: `→ scanning for "${search[1]}"`, kind: 'scan' as const };
+        if (call.startsWith('list_files')) return { text: 'Indexing repository files...', kind: 'read' as const };
+        if (call.startsWith('ask_user')) return { text: 'Preparing founder interview...', kind: 'milestone' as const };
+        return { text: call, kind: 'info' as const };
+      });
+    }
+    return [{ text: body, kind: 'info' }];
+  };
+  const realLogEntries = React.useMemo(
+    () => (run?.activity ?? []).flatMap((l: string) => prettifyActivity(l)),
+    [run?.activity]
+  );
+
   // --- Restart Flow ---
   const handleRestart = () => {
     setScreen(0);
@@ -629,7 +727,10 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <span className="w-2.5 h-2.5 bg-[#FFD600] rounded-sm shrink-0" />
           <span className="font-grotesk text-[13px] font-bold tracking-[2.5px] text-[#F5F5F0] uppercase">
-            Prava Agent Dashboard
+            Pay Right
+          </span>
+          <span className="hidden md:inline font-mono text-[9px] text-[#555555] tracking-wider uppercase border-l border-[#2D2D2D] pl-3">
+            powered by Prava
           </span>
         </div>
         
@@ -669,6 +770,23 @@ export default function Dashboard() {
               DEMO WALKTHROUGH
             </button>
           </div>
+
+          {/* Signed-in user + logout */}
+          {authUser && (
+            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-[#2D2D2D]">
+              <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#888888]">
+                <User size={12} className="text-[#FFD600]" />
+                <span className="text-[#F5F5F0] max-w-[120px] truncate">{authUser.name}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Sign out"
+                className="text-[#555555] hover:text-[#FF6B35] transition-colors"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -692,6 +810,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center justify-center text-center max-w-xl mx-auto py-12"
             >
               <span className="font-mono text-[10px] text-[#FFD600] tracking-[4px] uppercase bg-[#FFD600]/10 px-3 py-1 rounded-full mb-6">
@@ -761,121 +880,148 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-2xl mx-auto flex flex-col"
             >
               <h2 className="font-grotesk text-xl md:text-2xl font-bold tracking-wide mb-2 uppercase">
-                Select Agent Execution Mode
+                Who approves the purchase?
               </h2>
-              <p className="text-xs md:text-sm text-[#888888] mb-8 font-mono">
-                Decide how much authority is delegated to the Infra Fit Agent during purchase checkouts.
+              <p className="text-xs md:text-sm text-[#888888] mb-8 font-mono leading-relaxed">
+                The agent scans your repo, asks a few questions, and picks the cheapest hosting
+                plan that truly fits. Before any money moves, choose who gives the final go-ahead.
               </p>
 
               {/* Mode Cards */}
               <div className="grid md:grid-cols-2 gap-4 mb-8">
                 {/* Approval Mode */}
-                <div 
+                <div
                   onClick={() => setMode('approval')}
-                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all flex flex-col justify-between h-[180px] ${
-                    mode === 'approval' 
-                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]' 
+                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
+                    mode === 'approval'
+                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]'
                       : 'border-[#2D2D2D] opacity-60 hover:opacity-90'
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase">
-                        Approval Mode
-                      </span>
-                      <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                        mode === 'approval' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
-                      }`}>
-                        {mode === 'approval' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#888888] leading-relaxed font-mono">
-                      Review recommended pricing proposals and authorize transactions manually. Recommended.
-                    </p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
+                      <UserCheck size={14} className="text-[#FFD600]" />
+                      Approval Mode
+                    </span>
+                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      mode === 'approval' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
+                    }`}>
+                      {mode === 'approval' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
+                    </span>
                   </div>
-                  <span className="font-mono text-[9px] text-[#FFD600] tracking-wider uppercase mt-4">Requires checkout confirmation</span>
+                  <p className="font-mono text-[10px] text-[#888888] mb-4">You get the final say.</p>
+                  <ol className="flex flex-col gap-2.5 font-mono text-[10px] text-[#888888] leading-relaxed">
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FFD600] font-bold shrink-0">1</span>
+                      Agent scans your code and recommends a plan with evidence
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FFD600] font-bold shrink-0">2</span>
+                      <span><span className="text-[#F5F5F0]">You review the reasoning</span> and click Approve or Reject</span>
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FFD600] font-bold shrink-0">3</span>
+                      You confirm the payment with your Prava passkey
+                    </li>
+                  </ol>
+                  <span className="font-mono text-[9px] text-[#FFD600] tracking-wider uppercase mt-4 pt-3 border-t border-[#1D1D1D]">
+                    Recommended — 2 human checkpoints
+                  </span>
                 </div>
 
                 {/* Autonomy Mode */}
-                <div 
+                <div
                   onClick={() => setMode('autonomy')}
-                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all flex flex-col justify-between h-[180px] ${
-                    mode === 'autonomy' 
-                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]' 
+                  className={`bg-[#0F0F0F] border p-6 rounded-lg cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col ${
+                    mode === 'autonomy'
+                      ? 'border-[#FFD600] shadow-[0_0_15px_rgba(255,214,0,0.08)]'
                       : 'border-[#2D2D2D] opacity-60 hover:opacity-90'
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase">
-                        Full Autonomy Mode
-                      </span>
-                      <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                        mode === 'autonomy' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
-                      }`}>
-                        {mode === 'autonomy' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#888888] leading-relaxed font-mono">
-                      Agent buys automatically within limits you set. For teams who already trust it in production.
-                    </p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-grotesk text-xs font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2">
+                      <Zap size={14} className="text-[#FF6B35]" />
+                      Full Autonomy Mode
+                    </span>
+                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
+                      mode === 'autonomy' ? 'border-[#FFD600] bg-[#FFD600]/10' : 'border-[#444444]'
+                    }`}>
+                      {mode === 'autonomy' && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600]" />}
+                    </span>
                   </div>
-                  <span className="font-mono text-[9px] text-[#FF6B35] tracking-wider uppercase mt-4">Fully automated transactions</span>
+                  <p className="font-mono text-[10px] text-[#888888] mb-4">The agent decides for you.</p>
+                  <ol className="flex flex-col gap-2.5 font-mono text-[10px] text-[#888888] leading-relaxed">
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FF6B35] font-bold shrink-0">1</span>
+                      Agent scans your code and picks the plan on its own
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FF6B35] font-bold shrink-0">2</span>
+                      <span><span className="text-[#F5F5F0]">No approval screen</span> — the decision is auto-signed within your spend cap</span>
+                    </li>
+                    <li className="flex gap-2.5">
+                      <span className="text-[#FF6B35] font-bold shrink-0">3</span>
+                      One Prava passkey tap releases the money — that&apos;s payment security, not a decision, and the agent can never skip it
+                    </li>
+                  </ol>
+                  <span className="font-mono text-[9px] text-[#FF6B35] tracking-wider uppercase mt-4 pt-3 border-t border-[#1D1D1D]">
+                    Skips human review — cap still enforced by code
+                  </span>
                 </div>
               </div>
 
-              {/* Wallet Limits Section */}
+              {/* Guardrails — the limits that hold in BOTH modes */}
               <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-6 mb-8 flex flex-col gap-6">
+                <div className="font-grotesk text-[11px] font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2 -mb-2">
+                  <Shield size={13} className="text-[#FFD600]" />
+                  Guardrails — enforced by code in both modes
+                </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-mono text-[10px] text-[#555555] tracking-wider uppercase">Set Max Monthly Spend Limit</span>
+                    <span className="font-mono text-[10px] text-[#555555] tracking-wider uppercase">Hard spend ceiling (per month)</span>
                     <span className="font-mono text-xs font-bold text-[#FFD600] bg-[#FFD600]/10 px-2 py-0.5 rounded border border-[#FFD600]/25">
                       ${limit} USD
                     </span>
                   </div>
                   <input
                     type="range"
-                    min="10"
-                    max="200"
-                    step="10"
+                    min="5"
+                    max="100"
+                    step="5"
                     value={limit}
                     onChange={(e) => setLimit(Number(e.target.value))}
-                    disabled={dataSource === 'real'} // Real backend config is set by env
-                    className="w-full accent-[#FFD600] bg-[#1D1D1D] rounded-lg appearance-none h-1.5 cursor-pointer disabled:opacity-50"
+                    className="w-full accent-[#FFD600] bg-[#1D1D1D] rounded-lg appearance-none h-1.5 cursor-pointer"
                   />
                   <div className="flex justify-between text-[9px] text-[#555555] font-mono mt-1">
-                    <span>$10 USD</span>
-                    <span>$100 USD</span>
-                    <span>$200 USD</span>
+                    <span>$5</span>
+                    <span>$50</span>
+                    <span>$100</span>
                   </div>
-                  {dataSource === 'real' && (
-                    <div className="mt-2 text-[9px] text-[#888888] font-mono italic">
-                      Note: Wallet limit is configured on the backend via env values.
-                    </div>
-                  )}
+                  <p className="mt-2.5 text-[10px] text-[#888888] font-mono leading-relaxed">
+                    Any plan priced above this <span className="text-[#F5F5F0]">halts the run before Prava is ever contacted</span> —
+                    checked by deterministic code the AI cannot override.
+                    <span className="text-[#555555]"> (Most recommended plans cost $5–$25. Set this below the price to watch a live CAP_EXCEEDED halt.)</span>
+                  </p>
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] text-[#555555] tracking-wider uppercase mb-2">
-                    Select Purchase Category
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      disabled={dataSource === 'real'}
-                      className="w-full bg-[#0A0A0A] border border-[#2D2D2D] text-xs font-mono text-[#F5F5F0] rounded p-2.5 focus:outline-none focus:border-[#FFD600] appearance-none disabled:opacity-50"
-                    >
-                      <option value="Hosting">Hosting</option>
-                      <option value="Databases">Databases</option>
-                      <option value="Storage">Cloud Storage</option>
-                      <option value="APIs">API Credits</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888888]" size={14} />
+                  <span className="block font-mono text-[10px] text-[#555555] tracking-wider uppercase mb-2">
+                    Purchase category
+                  </span>
+                  <div className="flex items-center gap-2.5 bg-[#0A0A0A] border border-[#2D2D2D] rounded p-2.5">
+                    <Lock size={12} className="text-[#FFD600] shrink-0" />
+                    <span className="font-mono text-xs text-[#F5F5F0]">Hosting</span>
+                    <span className="font-mono text-[9px] text-[#555555] uppercase tracking-wider ml-auto">Locked</span>
                   </div>
+                  <p className="mt-2 text-[10px] text-[#888888] font-mono leading-relaxed">
+                    This agent&apos;s mandate covers hosting only. If it ever proposed anything else,
+                    the category-lock rule halts the purchase automatically.
+                  </p>
                 </div>
               </div>
 
@@ -904,6 +1050,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full flex flex-col"
             >
               <div className="flex items-center justify-between mb-4">
@@ -972,47 +1119,70 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                /* Real API UI: live agent activity rail ("the code rail") */
-                <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-hidden flex flex-col mb-6">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#1D1D1D] mb-3">
-                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase">
-                      <Terminal size={12} />
-                      Live Agent Activity
+                /* Real API UI: file tree + streaming findings, fed by live run data */
+                <div className="grid md:grid-cols-2 gap-4 mb-6">
+                  {/* Left panel: real project file tree */}
+                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-y-auto flex flex-col">
+                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
+                      <Folder size={12} />
+                      Project File Directory
+                      <span className="ml-auto text-[#888888] normal-case tracking-normal">
+                        {run?.files?.length ? `${run.files.length} files` : ''}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 font-mono text-[10px] text-[#888888]">
-                      <Loader2 size={11} className="text-[#FFD600] animate-spin" />
-                      <span>RUN ID:</span>
-                      <span className="text-[#FFD600] font-bold">{runId}</span>
+                    <div className="flex-1 overflow-y-auto">
+                      {realTree.length > 0 ? (
+                        realTree.map(node => renderFileNode(node))
+                      ) : (
+                        <div className="flex items-center gap-2 font-mono text-xs text-[#555555] py-2">
+                          <Loader2 size={12} className="animate-spin text-[#FFD600]" />
+                          {run?.state === 'cloning' ? 'Cloning repository...' : 'Indexing files...'}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div
-                    ref={logContainerRef}
-                    className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed"
-                  >
-                    <AnimatePresence>
-                      {(run?.activity ?? []).map((line: string, idx: number) => (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, x: -5 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className={`py-1 border-b border-[#141414] ${
-                            line.includes('read_file') || line.includes('search_code') || line.includes('list_files')
-                              ? 'text-[#F5F5F0]'
-                              : line.includes('report ready') || line.includes('proposal:') || line.includes('4/4 passed')
-                                ? 'text-[#FFD600]'
-                                : line.includes('BLOCKED') || line.includes('FAILED')
-                                  ? 'text-[#FF6B35]'
-                                  : 'text-[#888888]'
-                          }`}
-                        >
-                          {line}
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                    {(run?.activity?.length ?? 0) === 0 && (
-                      <div className="text-[#555555] py-1">connecting to agent…</div>
-                    )}
+
+                  {/* Right panel: streaming agent findings (live activity, prettified) */}
+                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-5 h-[340px] overflow-hidden flex flex-col">
+                    <div className="flex items-center gap-2 text-[#555555] font-mono text-[10px] tracking-wider uppercase pb-3 border-b border-[#1D1D1D] mb-3">
+                      <Terminal size={12} />
+                      Streaming Agent Findings
+                      <span className="ml-auto flex items-center gap-2 text-[#888888] normal-case tracking-normal">
+                        <Loader2 size={11} className="text-[#FFD600] animate-spin" />
+                        <span className="text-[#FFD600] font-bold">{runId}</span>
+                      </span>
+                    </div>
+                    <div
+                      ref={logContainerRef}
+                      className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed"
+                    >
+                      <AnimatePresence>
+                        {realLogEntries.map((entry: { text: string; kind: string }, idx: number) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className={`py-1 border-b border-[#141414] ${
+                              entry.kind === 'read'
+                                ? 'text-[#F5F5F0] font-medium'
+                                : entry.kind === 'scan'
+                                  ? 'text-[#FFD600] pl-3'
+                                  : entry.kind === 'milestone'
+                                    ? 'text-[#FFD600]'
+                                    : entry.kind === 'error'
+                                      ? 'text-[#FF6B35]'
+                                      : 'text-[#888888]'
+                            }`}
+                          >
+                            {entry.text}
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      {realLogEntries.length === 0 && (
+                        <div className="text-[#555555] py-1">connecting to agent…</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1043,6 +1213,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full flex flex-col"
             >
               <div className="mb-6">
@@ -1129,6 +1300,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full flex flex-col"
             >
               <div className="mb-6">
@@ -1148,9 +1320,9 @@ export default function Dashboard() {
                     Full Autonomy Mode Active
                   </div>
                   <div className="font-mono text-[10px] mt-1 text-[#FF6B35]/80">
-                    {dataSource === 'mock' 
+                    {dataSource === 'mock'
                       ? "Proceeding automatically to rules compliance check in 2s..."
-                      : "Processing rules compliance and issuing one-time payment tokens..."
+                      : `Decision auto-signed by the agent within your $${limit} cap — running rules compliance...`
                     }
                   </div>
                 </div>
@@ -1407,6 +1579,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full max-w-xl mx-auto flex flex-col"
             >
               <div className="text-center mb-8">
@@ -1500,8 +1673,18 @@ export default function Dashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     className="border-t border-[#1D1D1D] pt-5 mt-2 text-center"
                   >
+                    {mode === 'autonomy' && (
+                      <div className="font-mono text-[10px] text-[#888888] bg-[#0A0A0A] border border-[#2D2D2D] rounded p-3.5 mb-4 text-left leading-relaxed">
+                        <span className="text-[#FFD600] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                          <Zap size={11} /> Full autonomy — the decision is already made
+                        </span>
+                        The agent approved this purchase itself, inside your ${limit} cap.
+                        The passkey step below is <span className="text-[#F5F5F0]">Prava&apos;s payment security</span> —
+                        it releases the money; it is not an approval screen.
+                      </div>
+                    )}
                     <span className="font-mono text-[10px] text-[#FFD600] tracking-wider uppercase block mb-3 animate-pulse">
-                      Prava Payment Gateway Ready
+                      {mode === 'autonomy' ? 'Passkey required to release funds' : 'Prava Payment Gateway Ready'}
                     </span>
                     <a
                       href={run.payment_url}
@@ -1509,7 +1692,7 @@ export default function Dashboard() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-8 py-3.5 transition-colors uppercase tracking-wider rounded-sm shadow-lg shadow-[#FFD600]/10"
                     >
-                      Complete payment via Prava
+                      {mode === 'autonomy' ? 'Authorize with passkey' : 'Complete payment via Prava'}
                       <ExternalLink size={13} />
                     </a>
                     <span className="font-mono text-[9px] text-[#555] block mt-2">
@@ -1569,6 +1752,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="w-full flex flex-col max-w-2xl mx-auto"
             >
               <div className="flex items-center gap-2 mb-6">
@@ -1678,7 +1862,8 @@ export default function Dashboard() {
         </AnimatePresence>
       </main>
 
-      {/* FLOATING DEMO CONTROL PANEL */}
+      {/* FLOATING DEMO CONTROL PANEL — mock walkthrough only, never in real runs */}
+      {dataSource === 'mock' && (
       <div className={`fixed bottom-4 right-4 z-50 bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg shadow-2xl overflow-hidden transition-all duration-300 w-[240px] flex flex-col font-mono text-[10px] ${
         isDemoPanelOpen ? 'max-h-[380px]' : 'max-h-[34px]'
       }`}>
@@ -1789,6 +1974,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      )}
 
       {/* Code Evidence Viewer Modal */}
       {selectedFindingForModal && (

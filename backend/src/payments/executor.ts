@@ -13,19 +13,37 @@
  */
 import type {
   ApprovalDecision,
+  HaltCode,
   PurchaseProposal,
   RequirementsReport,
+  RetryClass,
   RulesCheckResult,
   TransactionReceipt,
 } from "../core/contract.js";
 import { decisionAuthorizes, runRulesCheck } from "../core/rules.js";
+import { computeAuditSeal } from "../core/audit.js";
 import { createSession, pollPaymentResult, reportStatus } from "./prava.js";
+import { z } from "zod";
+import { RuleName as RuleNameSchema } from "../core/contract.js";
+
+/** Failing rule -> typed halt code + what a legitimate next move is. */
+const RULE_TO_HALT: Record<
+  z.infer<typeof RuleNameSchema>,
+  { code: HaltCode; retry: RetryClass }
+> = {
+  "spend-ceiling": { code: "CAP_EXCEEDED", retry: "user-approval" }, // only a human can raise the cap
+  "price-match": { code: "PRICE_MISMATCH", retry: "re-quote" }, // proposal is stale — regenerate
+  "category-lock": { code: "CATEGORY_VIOLATION", retry: "no-retry" }, // scope breach, never valid
+  traceability: { code: "TRACEABILITY_BROKEN", retry: "re-quote" }, // defective proposal — regenerate
+};
 
 export interface ExecuteInput {
   report: RequirementsReport;
   proposal: PurchaseProposal;
   decision: ApprovalDecision;
   user: { id: string; email: string };
+  /** Per-run spend ceiling ("50.00"). Omitted = env WALLET_LIMIT_USD. */
+  wallet_limit_usd?: string;
   /** Called with the Prava payment URL so the runner/UI can show it to the user. */
   onPaymentUrl?: (url: string, sessionId: string) => void;
 }
@@ -38,6 +56,8 @@ export interface ExecuteOutcome {
 function haltReceipt(
   proposal: PurchaseProposal,
   reason: string,
+  code: HaltCode,
+  retry: RetryClass,
   sessionId?: string
 ): TransactionReceipt {
   return {
@@ -45,10 +65,13 @@ function haltReceipt(
     method: "session",
     ...(sessionId ? { session_id: sessionId } : {}),
     merchant: proposal.recommended.provider,
+    plan: proposal.recommended.plan,
     amount: proposal.recommended.price,
     currency: "USD",
     status: "HALTED",
     halt_reason: reason,
+    halt_code: code,
+    retry_class: retry,
     timestamp: new Date().toISOString(),
   };
 }
@@ -59,15 +82,40 @@ export async function executePurchase(input: ExecuteInput): Promise<ExecuteOutco
 
   // Gate 0: the decision must authorize this exact proposal.
   const auth = decisionAuthorizes(decision, proposal);
-  const rules = runRulesCheck({ report, proposal, decision, charge_amount: chargeAmount });
+  const rules = runRulesCheck({
+    report,
+    proposal,
+    decision,
+    charge_amount: chargeAmount,
+    wallet_limit_usd: input.wallet_limit_usd,
+  });
+
+  // Every outcome leaves with a tamper-evident seal over the whole bundle.
+  const sealed = (receipt: TransactionReceipt): ExecuteOutcome => {
+    const { audit_seal: _drop, ...unsealed } = receipt;
+    receipt.audit_seal = computeAuditSeal({ report, proposal, decision, rules, receipt: unsealed });
+    return { rules, receipt };
+  };
 
   if (!auth.ok) {
-    return { rules, receipt: haltReceipt(proposal, `authorization failed: ${auth.reason}`) };
+    const isRejection = decision.decision === "rejected";
+    return sealed(
+      haltReceipt(
+        proposal,
+        `authorization failed: ${auth.reason}`,
+        isRejection ? "USER_REJECTED" : "DECISION_INVALID",
+        isRejection ? "user-approval" : "no-retry"
+      )
+    );
   }
-  // Gate 1-4: the rules layer.
+  // Gate 1-4: the rules layer. The FIRST failing rule names the typed code.
   if (!rules.passed) {
-    const failed = rules.checks.filter((c) => !c.passed).map((c) => `${c.rule}: ${c.detail}`);
-    return { rules, receipt: haltReceipt(proposal, `rules layer blocked: ${failed.join("; ")}`) };
+    const failedChecks = rules.checks.filter((c) => !c.passed);
+    const first = RULE_TO_HALT[failedChecks[0]!.rule];
+    const detail = failedChecks.map((c) => `${c.rule}: ${c.detail}`).join("; ");
+    return sealed(
+      haltReceipt(proposal, `rules layer blocked: ${detail}`, first.code, first.retry)
+    );
   }
 
   // Only now may Prava be touched.
@@ -104,25 +152,29 @@ export async function executePurchase(input: ExecuteInput): Promise<ExecuteOutco
     // credential is intentionally NOT logged or persisted.
     await reportStatus(session.session_id, credential.txn_ref_id, "APPROVED");
 
-    return {
-      rules,
-      receipt: {
-        proposal_id: proposal.meta.proposal_id,
-        method: "session",
-        session_id: session.session_id,
-        txn_ref_id: credential.txn_ref_id,
-        merchant: cat.provider,
-        amount: chargeAmount,
-        currency: "USD",
-        status: "APPROVED",
-        timestamp: new Date().toISOString(),
-      },
-    };
+    return sealed({
+      proposal_id: proposal.meta.proposal_id,
+      method: "session",
+      session_id: session.session_id,
+      txn_ref_id: credential.txn_ref_id,
+      merchant: cat.provider,
+      plan: cat.plan,
+      amount: chargeAmount,
+      currency: "USD",
+      status: "APPROVED",
+      timestamp: new Date().toISOString(),
+    });
   } catch (e) {
-    // HALT: surface, never retry.
-    return {
-      rules,
-      receipt: haltReceipt(proposal, `transaction failed: ${(e as Error).message}`, sessionId),
-    };
+    // HALT: surface, never retry. A fresh session needs a fresh human
+    // passkey, so the legitimate next move is user-approval.
+    return sealed(
+      haltReceipt(
+        proposal,
+        `transaction failed: ${(e as Error).message}`,
+        "TRANSACTION_FAILED",
+        "user-approval",
+        sessionId
+      )
+    );
   }
 }

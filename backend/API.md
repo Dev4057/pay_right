@@ -37,7 +37,11 @@ The frontend's whole job: **start a run, poll it, and render by `state`.**
 ```
 
 ### `POST /api/runs` — start a run
-Body (all optional): `{ "repo_path": "...", "mode": "approval" | "autonomy" }`
+Body (all optional): `{ "repo_path": "...", "mode": "approval" | "autonomy", "wallet_limit_usd": 30 }`
+`wallet_limit_usd` (number, 1–1000) sets THIS run's hard spend ceiling — the
+deterministic spend-ceiling rule uses it instead of the backend's
+`WALLET_LIMIT_USD` env default. Set it below the plan price to demo a live
+CAP_EXCEEDED halt.
 `repo_path` accepts three forms:
 - **blank/omitted** → the bundled `demo-repo`
 - **a local path** — absolute, or relative to the project root (e.g. `"demo-repo"`)
@@ -58,7 +62,10 @@ Returns the full run object:
   "proposal": { "...": "PurchaseProposal — same shape as src/core/fixtures/proposal.example.json" },
   "decision": null,
   "rules":    { "passed": true, "checks": [ { "rule": "spend-ceiling", "passed": true, "detail": "..." } ] },
-  "receipt":  { "status": "APPROVED | DECLINED | HALTED", "halt_reason": "...", "...": "..." },
+  "receipt":  { "status": "APPROVED | DECLINED | HALTED", "plan": "Hobby",
+                "halt_reason": "human text", "halt_code": "CAP_EXCEEDED | PRICE_MISMATCH | CATEGORY_VIOLATION | TRACEABILITY_BROKEN | USER_REJECTED | DECISION_INVALID | TRANSACTION_FAILED",
+                "retry_class": "no-retry | re-quote | user-approval",
+                "audit_seal": "sha256 over the whole decision bundle (tamper evidence)", "...": "..." },
   "payment_url": "https://sandbox.collect.prava.space?session=...",
   "error": null,
   "activity": [
@@ -72,6 +79,8 @@ Returns the full run object:
 Fields are `null` until their stage has happened. `activity` is the live agent
 feed ("the code rail") — append-only, capped at 300 lines; render it as a
 terminal during `cloning`/`exploring`/`analyzing`/`proposing`/`executing`.
+`files` (string[], repo-relative paths, capped at 500) appears once the repo is
+indexed — use it to render the project file tree next to the activity feed.
 
 ### `POST /api/runs/:id/answers`
 Body: `{ "answers": { "Q_USERS": "100-1K", "Q_ACTIVITY": "All day", "...": "..." } }`

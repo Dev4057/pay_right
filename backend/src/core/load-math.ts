@@ -57,6 +57,7 @@ const LoadAnswersSchema = z.object({
   Q_LAUNCH: z.enum(["Quiet rollout", "Launch-day spike", "Marketing push"]),
 });
 
+/** One step up the ladder (XS->S->M->L), never past L. */
 function bump(cls: LoadClass): LoadClass {
   const i = ORDER.indexOf(cls);
   return ORDER[Math.min(i + 1, ORDER.length - 1)] as LoadClass;
