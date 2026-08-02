@@ -3,6 +3,8 @@
 # Common ignores
 node_modules/
 .next/
+.env
 .env*.local
 .DS_Store
 .vercel
+*.tsbuildinfo

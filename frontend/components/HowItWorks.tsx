@@ -37,7 +37,7 @@ function StepCard({
 
 export default function HowItWorks() {
   return (
-    <section className="flex flex-col w-full bg-[#0D0D0D] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px]">
+    <section id="process" className="flex flex-col w-full bg-[#0D0D0D] py-16 px-6 md:py-[100px] md:px-[120px] gap-12 md:gap-[64px]">
       <SectionHeader
         label="[02] // THE PROCESS"
         title={"THREE STEPS.\nZERO GUESSWORK."}

@@ -14,26 +14,24 @@ export default function FinalCTA() {
 
       {/* Title */}
       <h2 className="font-grotesk text-[44px] md:text-[80px] font-bold text-[#F5F5F0] tracking-[-2px] leading-none text-center w-full max-w-[1000px] whitespace-pre-line">
-        <GlitchText text={"STOP DESIGNING.\nSTART SHIPPING."} speed={40} delay={200} />
+        <GlitchText text={"STOP GUESSING.\nSTART DEPLOYING WITH EVIDENCE."} speed={40} delay={200} />
       </h2>
 
       {/* Subtitle */}
       <p className="font-ibm-mono text-[10px] md:text-[14px] text-[#666666] tracking-[0.5px] md:tracking-[2px] text-center text-pretty w-full max-w-[700px] px-2">
-        <GlitchText text="JOIN 10,000+ BUILDERS WHO SHIP PIXEL-PERFECT PRODUCTS, FASTER." speed={20} delay={450} />
+        <GlitchText text="BUILT FOR THE AGENTIC COMMERCE HACKATHON." speed={20} delay={450} />
       </p>
 
       {/* CTAs */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-[16px] w-full sm:w-auto">
-        <button className="flex items-center justify-center w-full sm:w-[260px] h-[64px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors">
+      <div className="flex items-center justify-center w-full sm:w-auto">
+        <a
+          href="/dashboard"
+          className="flex items-center justify-center w-full sm:w-[240px] h-[64px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors"
+        >
           <span className="font-grotesk text-[13px] font-bold text-[#0A0A0A] tracking-[2px]">
-            GET STARTED — FREE
+            ANALYZE REPO
           </span>
-        </button>
-        <button className="flex items-center justify-center w-full sm:w-[220px] h-[64px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors">
-          <span className="font-ibm-mono text-[12px] text-[#666666] tracking-[2px]">
-            SCHEDULE A DEMO
-          </span>
-        </button>
+        </a>
       </div>
     </section>
   );

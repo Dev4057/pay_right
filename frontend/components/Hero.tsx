@@ -47,7 +47,13 @@ export default function Hero() {
             ANALYZE REPO
           </span>
         </a>
-        <button className="flex items-center justify-center w-full sm:w-[200px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors">
+        <button
+          onClick={() => {
+            const el = document.getElementById("process");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className="flex items-center justify-center w-full sm:w-[200px] h-[56px] bg-[#0A0A0A] border-2 border-[#3D3D3D] hover:border-[#888888] transition-colors cursor-pointer"
+        >
           <span className="font-ibm-mono text-[12px] text-[#888888] tracking-[2px]">
             HOW IT WORKS &gt;
           </span>
