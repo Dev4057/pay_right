@@ -1402,7 +1402,7 @@ export default function Dashboard() {
                 </button>
                 <button 
                   onClick={handleSubmitAnswers}
-                  disabled={dataSource === 'real' && (!run?.questions || run.questions.some((q: any) => !interviewAnswers[q.q_id]))}
+                      disabled={dataSource === 'real' && (!run?.questions || run.questions.some((q: any) => !interviewAnswers[q.q_id]))}
                   className="font-grotesk text-xs md:text-sm font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#e6c200] px-8 py-3 transition-colors uppercase tracking-wider rounded-sm shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Submit & Compute Fit
@@ -1419,25 +1419,25 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex flex-col"
+              className="w-full max-w-[1300px] mx-auto flex flex-col py-4 md:py-6"
             >
               <div className="mb-6">
-                <h2 className="font-grotesk text-lg md:text-xl font-bold tracking-wide uppercase">
+                <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide uppercase text-[#F5F5F0]">
                   Proposed Infrastructure Strategy
                 </h2>
-                <span className="font-mono text-[9px] text-[#888888] uppercase tracking-wider">
+                <span className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] uppercase tracking-wider font-semibold block mt-1">
                   Review findings derived from your code and the recommended cloud purchase
                 </span>
               </div>
 
               {/* Autonomy Mode Warning */}
               {mode === 'autonomy' && (
-                <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/30 text-[#FF6B35] rounded p-4 mb-6">
-                  <div className="font-grotesk text-xs font-bold uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] animate-pulse" />
+                <div className="bg-[#FF6B35]/10 border border-[#FF6B35] text-[#FF6B35] rounded p-4 mb-6">
+                  <div className="font-grotesk text-xs md:text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#FF6B35] animate-pulse" />
                     Full Autonomy Mode Active
                   </div>
-                  <div className="font-mono text-[10px] mt-1 text-[#FF6B35]/80">
+                  <div className="font-ibm-mono text-xs mt-1 text-[#FF6B35] font-semibold">
                     {dataSource === 'mock'
                       ? "Proceeding automatically to rules compliance check in 2s..."
                       : `Decision auto-signed by the agent within your $${limit} cap — running rules compliance...`
@@ -1449,13 +1449,13 @@ export default function Dashboard() {
               {/* Main Content Layout */}
               <div className="grid md:grid-cols-12 gap-6 mb-8">
                 {/* Left Panel: Findings Accordion */}
-                <div className="md:col-span-7 flex flex-col gap-3">
-                  <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-1">Derived Findings</h3>
+                <div className="md:col-span-5 flex flex-col gap-3">
+                  <h3 className="font-ibm-mono text-xs font-bold text-[#FFD600] uppercase tracking-wider mb-1">Derived Findings</h3>
                   
                   {activeFindings.length === 0 ? (
                     <div className="bg-[#0F0F0F] border border-dashed border-[#2D2D2D] rounded-lg p-8 text-center">
                       <ShieldAlert size={24} className="text-[#888888] mx-auto mb-2" />
-                      <p className="font-mono text-xs text-[#555]">No code signals detected.</p>
+                      <p className="font-ibm-mono text-xs text-[#888888]">No code signals detected.</p>
                     </div>
                   ) : (
                     activeFindings.map((finding, fIdx) => {
@@ -1464,7 +1464,7 @@ export default function Dashboard() {
                         <div
                           key={`${finding.id}-${fIdx}`}
                           id={`finding-${finding.id}`}
-                          className={`bg-[#0F0F0F] border rounded transition-all overflow-hidden ${
+                          className={`bg-[#0F0F0F] border-2 rounded transition-all overflow-hidden ${
                             isExpanded ? 'border-[#FFD600] ring-1 ring-[#FFD600]/20' : 'border-[#2D2D2D]'
                           }`}
                         >
@@ -1473,33 +1473,33 @@ export default function Dashboard() {
                             onClick={() => setExpandedFindingId(isExpanded ? null : finding.id)}
                             className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#141414] transition-colors gap-4"
                           >
-                            <span className="font-grotesk text-xs font-bold text-[#F5F5F0] uppercase tracking-wider truncate">
+                            <span className="font-grotesk text-xs md:text-sm font-bold text-[#F5F5F0] uppercase tracking-wider truncate">
                               {finding.title}
                             </span>
                             <div className="flex items-center gap-3 shrink-0">
                               <ConfidenceBadge tag={finding.tag as any} />
-                              {isExpanded ? <ChevronUp size={14} className="text-[#888888]" /> : <ChevronDown size={14} className="text-[#888888]" />}
+                              {isExpanded ? <ChevronUp size={14} className="text-[#D4D4D4]" /> : <ChevronDown size={14} className="text-[#D4D4D4]" />}
                             </div>
                           </div>
 
                           {/* Expanded content */}
                           {isExpanded && (
-                            <div className="px-4 pb-4 pt-2 border-t border-[#1D1D1D] bg-[#0A0A0A]/50 flex flex-col gap-3 font-mono text-[11px] text-[#888888]">
+                            <div className="px-4 pb-4 pt-2 border-t border-[#1D1D1D] bg-[#0A0A0A]/50 flex flex-col gap-3 font-ibm-mono text-xs text-[#D4D4D4]">
                               {finding.tag === 'assumption' ? (
-                                <div className="flex items-start gap-2 text-[#9ca3af]">
+                                <div className="flex items-start gap-2 text-[#D4D4D4]">
                                   <span className="text-base select-none mt-[-3px]">⚪</span>
                                   <span>{finding.reasoning}</span>
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-3">
                                   <div>
-                                    <span className="text-[#555555] uppercase text-[9px] tracking-wider block mb-1">Evidence</span>
+                                    <span className="text-[#FFD600] uppercase text-[10px] tracking-wider block mb-1 font-bold">Evidence</span>
                                     <span className="text-[#F5F5F0]">{finding.evidence}</span>
                                   </div>
                                   {finding.codeSnippet && finding.fileName && (
                                     <button
                                       onClick={() => setSelectedFindingForModal(finding)}
-                                      className="font-mono text-[10px] text-[#FFD600] hover:text-[#F5F5F0] flex items-center gap-1.5 mt-1 border border-[#FFD600]/30 hover:border-[#F5F5F0] bg-[#FFD600]/5 px-3 py-1.5 self-start transition-colors"
+                                      className="font-ibm-mono text-xs text-[#FFD600] hover:text-[#F5F5F0] flex items-center gap-1.5 mt-1 border border-[#FFD600]/30 hover:border-[#F5F5F0] bg-[#FFD600]/5 px-3 py-1.5 self-start transition-colors rounded-sm"
                                     >
                                       View in code →
                                     </button>
@@ -1514,133 +1514,121 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Right Panel: Proposals Chosen vs Rejected */}
-                <div className="md:col-span-5 flex flex-col gap-4">
-                  <h3 className="font-mono text-[10px] text-[#555] uppercase tracking-wider mb-1">Purchase Proposal</h3>
+                {/* Right Panel: Feature-by-Feature Provider Matrix Table */}
+                <div className="md:col-span-7 flex flex-col gap-3">
+                  <h3 className="font-ibm-mono text-xs font-bold text-[#FFD600] uppercase tracking-wider mb-1">
+                    [04] // PROVIDER FIT MATRIX
+                  </h3>
 
-                  {/* Recommended Card */}
-                  <div className="bg-[#0F0F0F] border border-[#FFD600] rounded-lg p-5 flex flex-col justify-between shadow-[0_0_20px_rgba(255,214,0,0.05)]">
-                    <div>
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <span className="font-mono text-[9px] text-[#22c55e] border border-[#22c55e]/30 bg-[#22c55e]/5 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                            Recommended Fit
-                          </span>
-                          <h3 className="font-grotesk text-base font-bold text-[#F5F5F0] mt-1.5">
-                            {dataSource === 'mock' 
-                              ? "Railway Pro" 
-                              : `${run?.proposal?.recommended?.provider} ${run?.proposal?.recommended?.plan}`
-                            }
-                          </h3>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-grotesk text-lg font-bold text-[#FFD600] block">
-                            ${dataSource === 'mock' ? '20' : run?.proposal?.recommended?.price}
-                          </span>
-                          <span className="font-mono text-[9px] text-[#555] uppercase">
-                            /{dataSource === 'mock' ? 'mo' : run?.proposal?.recommended?.billing_cycle}
-                          </span>
-                        </div>
+                  {/* Feature Comparison Table (Matches Landing Page & Uploaded Screenshot Design) */}
+                  <div className="flex flex-col w-full border border-[#2D2D2D] bg-[#0A0A0A] rounded-sm overflow-hidden shadow-xl">
+                    {/* Header Row */}
+                    <div className="flex w-full min-h-[52px] bg-[#111111] border-b-2 border-b-[#FFD600] text-[10px] font-grotesk font-bold">
+                      <div className="flex items-center w-[34%] shrink-0 px-3 md:px-4 border-r border-r-[#2D2D2D] text-[#888888] tracking-[1.5px] uppercase">
+                        FEATURE / SIGNAL
                       </div>
-
-                      <div className="border-t border-[#1D1D1D] pt-4 flex flex-col gap-3.5">
-                        {dataSource === 'mock' ? (
-                          MOCK_PROPOSALS[0].points.map((p, idx) => (
-                            <div key={idx} className="flex items-start gap-2">
-                              <Check size={13} className="text-[#22c55e] shrink-0 mt-0.5" />
-                              <div className="font-mono text-[11px] leading-normal text-[#888888]">
-                                <span>{p.text} </span>
-                                {p.findingId && (
-                                  <button 
-                                    onClick={() => setExpandedFindingId(p.findingId || null)}
-                                    className="inline-flex items-center text-[9px] uppercase tracking-wider font-bold text-[#FFD600] border border-[#FFD600]/25 px-1 py-0.2 rounded ml-1 bg-[#FFD600]/5 hover:bg-[#FFD600]/20"
-                                  >
-                                    {p.findingId.toUpperCase()}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          run?.proposal?.reasoning?.map((r: any, idx: number) => (
-                            <div key={idx} className="flex items-start gap-2">
-                              <Check size={13} className="text-[#22c55e] shrink-0 mt-0.5" />
-                              <div className="font-mono text-[11px] leading-normal text-[#888888]">
-                                <span>{r.reason} </span>
-                                {r.finding_ids?.map((fId: string) => (
-                                  <button 
-                                    key={fId}
-                                    onClick={() => {
-                                      setExpandedFindingId(fId);
-                                      // Scroll to finding
-                                      document.getElementById(`finding-${fId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                                    }}
-                                    className="inline-flex items-center text-[9px] uppercase tracking-wider font-bold text-[#FFD600] border border-[#FFD600]/25 px-1 py-0.2 rounded ml-1 bg-[#FFD600]/5 hover:bg-[#FFD600]/20"
-                                  >
-                                    {fId}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ))
-                        )}
+                      <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 bg-[#1A1A1A] border-r border-r-[#2D2D2D] text-[#FFD600] tracking-[1px] uppercase">
+                        {dataSource === 'mock' 
+                          ? "RAILWAY HOBBY [✓]" 
+                          : `${(run?.proposal?.recommended?.provider || 'RAILWAY').toUpperCase()} ${(run?.proposal?.recommended?.plan || 'HOBBY').toUpperCase()} [✓]`
+                        }
+                      </div>
+                      <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 border-r border-r-[#2D2D2D] text-[#888888] tracking-[1px] uppercase">
+                        {dataSource === 'mock' 
+                          ? "RENDER STARTER [—]" 
+                          : run?.proposal?.alternatives?.[0]
+                            ? `${run.proposal.alternatives[0].provider.toUpperCase()} ${run.proposal.alternatives[0].plan.toUpperCase()} [—]`
+                            : "RENDER STARTER [—]"
+                        }
+                      </div>
+                      <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 text-[#888888] tracking-[1px] uppercase">
+                        {dataSource === 'mock' 
+                          ? "DIGITALOCEAN 1GB [—]" 
+                          : run?.proposal?.alternatives?.[1]
+                            ? `${run.proposal.alternatives[1].provider.toUpperCase()} ${run.proposal.alternatives[1].plan.toUpperCase()} [—]`
+                            : "DIGITALOCEAN 1GB [—]"
+                        }
                       </div>
                     </div>
+
+                    {/* Data Rows */}
+                    {[
+                      { 
+                        feature: "MANAGED POSTGRES DB", 
+                        us: "[✓]", 
+                        alt1: "[✓]",
+                        alt2: "[—]" 
+                      },
+                      { 
+                        feature: "WEBSOCKETS REALTIME CHAT", 
+                        us: "[✓]", 
+                        alt1: "[✓]",
+                        alt2: "[✓]" 
+                      },
+                      { 
+                        feature: "PERSISTENT DISK UPLOADS", 
+                        us: "[✓]", 
+                        alt1: "[—]",
+                        alt2: "[✓]" 
+                      },
+                      { 
+                        feature: "MEDIUM LOAD CAPACITY (F7)", 
+                        us: "[✓]", 
+                        alt1: "[—]",
+                        alt2: "[✓]" 
+                      },
+                      { 
+                        feature: "ESTIMATED MONTHLY COST", 
+                        us: `$${dataSource === 'mock' ? '5.00' : run?.proposal?.recommended?.price || '5.00'}/MO`, 
+                        alt1: "$7.00/MO",
+                        alt2: "$6.00/MO" 
+                      },
+                    ].map((row, i, arr) => (
+                      <div 
+                        key={row.feature} 
+                        className={`flex w-full min-h-[50px] items-center text-xs font-ibm-mono ${
+                          i < arr.length - 1 ? "border-b border-b-[#1D1D1D]" : ""
+                        }`}
+                      >
+                        {/* Feature column */}
+                        <div className="flex items-center w-[34%] shrink-0 px-3 md:px-4 border-r border-r-[#2D2D2D] py-2.5">
+                          <span className="text-[#CCCCCC] text-[11px] tracking-[0.5px] uppercase font-bold">
+                            {row.feature}
+                          </span>
+                        </div>
+                        {/* Recommended column (Highlighted) */}
+                        <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 bg-[#0D0D0D] border-r border-r-[#2D2D2D] py-2.5">
+                          <span className="text-[#FFD600] font-bold text-xs md:text-sm tracking-[1px]">
+                            {row.us}
+                          </span>
+                        </div>
+                        {/* Alternative 1 column */}
+                        <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 border-r border-r-[#2D2D2D] py-2.5">
+                          <span className={`text-[11px] md:text-xs tracking-[0.5px] ${row.alt1 === '[✓]' ? 'text-[#888888]' : 'text-[#FF6B35] font-bold'}`}>
+                            {row.alt1}
+                          </span>
+                        </div>
+                        {/* Alternative 2 column */}
+                        <div className="flex items-center w-[22%] shrink-0 px-2 md:px-3 py-2.5">
+                          <span className={`text-[11px] md:text-xs tracking-[0.5px] ${row.alt2 === '[✓]' ? 'text-[#888888]' : 'text-[#FF6B35] font-bold'}`}>
+                            {row.alt2}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Rejected Alternatives Section */}
-                  <div className={`bg-[#0F0F0F] border rounded-lg p-5 flex flex-col justify-between transition-all ${
-                    showAlternativeSelector ? 'border-[#FF6B35]' : 'border-[#2D2D2D]'
-                  }`}>
-                    <div>
-                      <div className="flex justify-between items-start mb-3">
-                        <span className="font-mono text-[9px] text-[#FF6B35] border border-[#FF6B35]/30 bg-[#FF6B35]/5 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
-                          Rejected Alternatives
-                        </span>
-                      </div>
-                      
-                      <div className="border-t border-[#1D1D1D] pt-3 flex flex-col gap-3 font-mono text-[11px]">
-                        {dataSource === 'mock' ? (
-                          MOCK_PROPOSALS.filter(p => !p.isChosen).map(alt => (
-                            <div key={alt.id} className="text-[#888888]">
-                              <div className="flex justify-between text-xs font-bold text-[#F5F5F0] mb-1">
-                                <span>{alt.name}</span>
-                                <span className="text-[#FF6B35]">{alt.price}</span>
-                              </div>
-                              <p className="text-[10px] leading-relaxed text-[#FF6B35]/90 italic">
-                                {alt.points[0].text}
-                              </p>
-                            </div>
-                          ))
-                        ) : (
-                          run?.proposal?.alternatives?.map((alt: any, idx: number) => (
-                            <div key={idx} className="text-[#888888] border-b border-[#141414] pb-2 last:border-b-0">
-                              <div className="flex justify-between text-xs font-bold text-[#F5F5F0] mb-1">
-                                <span>{alt.provider} {alt.plan}</span>
-                                <span className="text-[#FF6B35]">${alt.price}/mo</span>
-                              </div>
-                              <p className="text-[10px] leading-relaxed text-[#888888] italic">
-                                {alt.why_rejected}
-                              </p>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
-                    {showAlternativeSelector && (
-                      <div className="mt-4 pt-3 border-t border-[#2D2D2D] flex flex-col gap-2">
-                        <p className="font-mono text-[9px] text-[#FF6B35] uppercase">
-                          Warning: Overriding the recommendation violates traceability validation checks.
-                        </p>
-                        <button 
-                          onClick={() => handleSubmitDecision('rejected')}
-                          className="font-grotesk text-[9px] font-bold text-[#0A0A0A] bg-[#FF6B35] hover:bg-[#F5F5F0] px-4 py-2 transition-colors uppercase tracking-wider w-full"
-                        >
-                          Force select and reject recommended
-                        </button>
-                      </div>
-                    )}
+                  {/* Summary reasoning box */}
+                  <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-sm p-4 font-ibm-mono text-xs text-[#D4D4D4] flex flex-col gap-2 mt-1">
+                    <span className="text-[#FFD600] font-bold uppercase text-[10px] tracking-wider">
+                      ★ Why {dataSource === 'mock' ? 'Railway Pro' : run?.proposal?.recommended?.provider || 'Railway'} was chosen:
+                    </span>
+                    <p className="text-[11px] text-[#D4D4D4] leading-relaxed">
+                      {dataSource === 'mock' 
+                        ? "Railway Pro satisfies all 4 code requirements (Postgres, WebSockets, Persistent Disk, M Load Class) at the lowest valid cost without violating capacity rules."
+                        : run?.proposal?.reasoning?.[0]?.reason || "Cheapest candidate plan fulfilling all code findings without compliance failures."
+                      }
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1732,28 +1720,28 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-3xl mx-auto flex flex-col"
+              className="w-full max-w-[1280px] mx-auto flex flex-col py-4 md:py-6"
             >
               <div className="text-center mb-8">
-                <span className="font-mono text-[9px] text-[#FFD600] tracking-[3px] uppercase block mb-1">Security Audit</span>
-                <h2 className="font-grotesk text-2xl font-bold uppercase tracking-wider text-[#F5F5F0]">
+                <span className="font-ibm-mono text-xs md:text-sm text-[#FFD600] tracking-[3px] uppercase block mb-1 font-bold">Security Audit</span>
+                <h2 className="font-grotesk text-3xl md:text-4xl font-bold uppercase tracking-wider text-[#F5F5F0]">
                   Rules Layer Verification
                 </h2>
-                <p className="font-mono text-[9px] text-[#555555] uppercase mt-1">
+                <p className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] uppercase font-semibold mt-1.5">
                   Validating purchase metadata against deterministic compliance filters
                 </p>
                 {/* Radical transparency: show the literal code that gates the money */}
                 <button
                   onClick={handleViewRulesCode}
-                  className="mt-3 inline-flex items-center gap-1.5 font-mono text-[10px] text-[#888888] hover:text-[#FFD600] border border-[#2D2D2D] hover:border-[#FFD600]/50 px-3 py-1.5 rounded-sm uppercase tracking-wider transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 font-ibm-mono text-xs md:text-sm text-[#F5F5F0] hover:text-[#FFD600] border-2 border-[#2D2D2D] hover:border-[#FFD600] bg-[#0F0F0F] px-4 py-2 rounded-sm uppercase tracking-wider transition-colors font-bold shadow-md"
                 >
-                  <FileCode size={11} />
+                  <FileCode size={14} />
                   These rules are code, not AI — read them
                 </button>
               </div>
 
               {/* Rules Cards */}
-              <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-6 mb-6 flex flex-col gap-4 font-mono text-xs">
+              <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 md:p-8 mb-6 flex flex-col gap-4 font-ibm-mono text-xs md:text-sm shadow-xl">
                 {dataSource === 'mock' ? (
                   /* Mock rules rendering */
                   MOCK_RULES_CHECKS.map((check, idx) => {
@@ -1766,28 +1754,28 @@ export default function Dashboard() {
                     return (
                       <div 
                         key={check.id}
-                        className={`flex items-center justify-between p-3 border rounded transition-colors ${
+                        className={`flex items-center justify-between p-4 border-2 rounded transition-colors ${
                           isFailed 
-                            ? 'border-[#FF6B35]/30 bg-[#FF6B35]/5 text-[#FF6B35]' 
+                            ? 'border-[#FF6B35]/40 bg-[#FF6B35]/10 text-[#FF6B35]' 
                             : isSuccess 
-                              ? 'border-[#22c55e]/20 bg-[#22c55e]/5 text-[#F5F5F0]' 
+                              ? 'border-[#22c55e]/30 bg-[#22c55e]/10 text-[#F5F5F0]' 
                               : isActive 
-                                ? 'border-[#FFD600] bg-[#FFD600]/5 text-[#F5F5F0]'
-                                : 'border-[#1D1D1D] text-[#555555]'
+                                ? 'border-[#FFD600] bg-[#FFD600]/10 text-[#F5F5F0]'
+                                : 'border-[#222222] text-[#888888]'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center border text-[10px] shrink-0">
-                            {isSuccess && <Check size={11} className="text-[#22c55e] stroke-[3px]" />}
-                            {isFailed && <span className="text-[#FF6B35] font-bold">!</span>}
-                            {isPending && !isActive && <span className="text-[#444]">-</span>}
-                            {isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#FFD600] animate-ping" />}
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center border-2 text-xs shrink-0 font-bold">
+                            {isSuccess && <Check size={14} className="text-[#22c55e] stroke-[3px]" />}
+                            {isFailed && <span className="text-[#FF6B35] font-bold text-sm">!</span>}
+                            {isPending && !isActive && <span className="text-[#666]">-</span>}
+                            {isActive && <span className="w-2 h-2 rounded-full bg-[#FFD600] animate-ping" />}
                           </div>
-                          <span className={`font-bold tracking-wide uppercase ${isSuccess ? 'text-[#F5F5F0]' : ''}`}>
+                          <span className={`font-bold tracking-wide uppercase text-xs md:text-sm ${isSuccess ? 'text-[#F5F5F0]' : ''}`}>
                             {check.title}
                           </span>
                         </div>
-                        <div className={`text-[11px] ${isSuccess ? 'text-[#22c55e]' : isFailed ? 'text-[#FF6B35]' : 'text-[#888888]'}`}>
+                        <div className={`text-xs md:text-sm font-semibold ${isSuccess ? 'text-[#22c55e]' : isFailed ? 'text-[#FF6B35]' : 'text-[#A3A3A3]'}`}>
                           {isFailed ? 'limit exceeded halt' : check.detail}
                         </div>
                       </div>
@@ -1800,25 +1788,25 @@ export default function Dashboard() {
                     return (
                       <div 
                         key={check.rule}
-                        className={`flex items-center justify-between p-3 border rounded transition-colors ${
+                        className={`flex items-center justify-between p-4 border-2 rounded transition-colors ${
                           isSuccess 
-                            ? 'border-[#22c55e]/20 bg-[#22c55e]/5 text-[#F5F5F0]' 
-                            : 'border-[#FF6B35]/30 bg-[#FF6B35]/5 text-[#FF6B35]' 
+                            ? 'border-[#22c55e]/30 bg-[#22c55e]/10 text-[#F5F5F0]' 
+                            : 'border-[#FF6B35]/40 bg-[#FF6B35]/10 text-[#FF6B35]' 
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center border text-[10px] shrink-0">
+                        <div className="flex items-center gap-3.5">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center border-2 text-xs shrink-0 font-bold">
                             {isSuccess ? (
-                              <Check size={11} className="text-[#22c55e] stroke-[3px]" />
+                              <Check size={14} className="text-[#22c55e] stroke-[3px]" />
                             ) : (
-                              <span className="text-[#FF6B35] font-bold">!</span>
+                              <span className="text-[#FF6B35] font-bold text-sm">!</span>
                             )}
                           </div>
-                          <span className={`font-bold tracking-wide uppercase ${isSuccess ? 'text-[#F5F5F0]' : ''}`}>
+                          <span className={`font-bold tracking-wide uppercase text-xs md:text-sm ${isSuccess ? 'text-[#F5F5F0]' : ''}`}>
                             {check.rule.replace("-", " ")}
                           </span>
                         </div>
-                        <div className={`text-[11px] ${isSuccess ? 'text-[#22c55e]' : 'text-[#FF6B35]'}`}>
+                        <div className={`text-xs md:text-sm font-semibold ${isSuccess ? 'text-[#22c55e]' : 'text-[#FF6B35]'}`}>
                           {check.detail}
                         </div>
                       </div>
@@ -1831,31 +1819,31 @@ export default function Dashboard() {
                   <motion.div 
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="border-t border-[#1D1D1D] pt-5 mt-2 text-center"
+                    className="border-t-2 border-[#1D1D1D] pt-6 mt-3 text-center"
                   >
                     {mode === 'autonomy' && (
-                      <div className="font-mono text-[10px] text-[#888888] bg-[#0A0A0A] border border-[#2D2D2D] rounded p-3.5 mb-4 text-left leading-relaxed">
-                        <span className="text-[#FFD600] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                          <Zap size={11} /> Full autonomy — the decision is already made
+                      <div className="font-ibm-mono text-xs text-[#D4D4D4] bg-[#0A0A0A] border-2 border-[#2D2D2D] rounded-lg p-4 mb-5 text-left leading-relaxed">
+                        <span className="text-[#FFD600] font-bold uppercase tracking-wider flex items-center gap-2 mb-1.5 text-xs md:text-sm">
+                          <Zap size={14} /> Full autonomy — decision automatically approved
                         </span>
                         The agent approved this purchase itself, inside your ${limit} cap.
-                        The passkey step below is <span className="text-[#F5F5F0]">Prava&apos;s payment security</span> —
+                        The passkey step below is <span className="text-[#FFFFFF] font-bold">Prava&apos;s payment security</span> —
                         it releases the money; it is not an approval screen.
                       </div>
                     )}
-                    <span className="font-mono text-[10px] text-[#FFD600] tracking-wider uppercase block mb-3 animate-pulse">
+                    <span className="font-ibm-mono text-xs md:text-sm text-[#FFD600] font-bold tracking-wider uppercase block mb-4 animate-pulse">
                       {mode === 'autonomy' ? 'Passkey required to release funds' : 'Prava Payment Gateway Ready'}
                     </span>
                     <a
                       href={run.payment_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-8 py-3.5 transition-colors uppercase tracking-wider rounded-sm shadow-lg shadow-[#FFD600]/10"
+                      className="inline-flex items-center gap-2.5 font-grotesk text-sm md:text-base font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#e6c200] px-10 py-4 transition-colors uppercase tracking-wider rounded-sm shadow-lg shadow-[#FFD600]/15"
                     >
                       {mode === 'autonomy' ? 'Authorize with passkey' : 'Complete payment via Prava'}
-                      <ExternalLink size={13} />
+                      <ExternalLink size={16} />
                     </a>
-                    <span className="font-mono text-[9px] text-[#555] block mt-2">
+                    <span className="font-ibm-mono text-xs text-[#A3A3A3] block mt-2.5 font-medium">
                       (Opens sandbox interface in a new window)
                     </span>
                   </motion.div>
@@ -1866,19 +1854,19 @@ export default function Dashboard() {
                   <motion.div 
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="border-t border-[#1D1D1D] pt-4 mt-2 text-center text-[11px] font-bold tracking-wider uppercase text-[#FFD600]"
+                    className="border-t-2 border-[#1D1D1D] pt-5 mt-3 text-center text-xs md:text-sm font-bold tracking-wider uppercase text-[#FFD600] font-ibm-mono"
                   >
                     {paymentStep}
                   </motion.div>
                 )}
 
                 {/* Subtle Analyze Another Repo button */}
-                <div className="border-t border-[#1D1D1D] pt-4 mt-3 flex justify-center">
+                <div className="border-t-2 border-[#1D1D1D] pt-5 mt-4 flex justify-center">
                   <button 
                     onClick={handleRestart}
-                    className="font-ibm-mono text-[11px] text-[#888888] hover:text-[#FFD600] bg-transparent border border-[#2D2D2D] hover:border-[#666666] px-4 py-2 transition-colors uppercase tracking-[1.5px] rounded-sm cursor-pointer flex items-center gap-2"
+                    className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] hover:text-[#FFD600] bg-transparent border-2 border-[#333333] hover:border-[#666666] px-6 py-3 transition-colors uppercase tracking-[1.5px] rounded-sm cursor-pointer flex items-center gap-2 font-bold"
                   >
-                    <RotateCcw size={12} />
+                    <RotateCcw size={14} />
                     ANALYZE ANOTHER REPO
                   </button>
                 </div>
@@ -1886,27 +1874,27 @@ export default function Dashboard() {
 
               {/* Halted Variant UI */}
               {(haltedAtCheck !== null || (dataSource === 'real' && run?.state === 'halted')) && (
-                <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/30 rounded-lg p-5 mb-6 text-left">
-                  <div className="flex items-center gap-2 text-[#FF6B35] font-grotesk text-xs font-bold uppercase tracking-wider">
-                    <ShieldAlert size={16} />
+                <div className="bg-[#FF6B35]/10 border-2 border-[#FF6B35] rounded-lg p-6 mb-6 text-left shadow-xl">
+                  <div className="flex items-center gap-2.5 text-[#FF6B35] font-grotesk text-sm md:text-base font-bold uppercase tracking-wider">
+                    <ShieldAlert size={18} />
                     Audit Halted: Compliance Failure
                   </div>
-                  <p className="font-mono text-[10px] text-[#888888] mt-2 leading-relaxed">
+                  <p className="font-ibm-mono text-xs md:text-sm text-[#D4D4D4] mt-2.5 leading-relaxed font-medium">
                     {dataSource === 'mock' 
                       ? "Proposed plan amount is $20/mo, but the checkout returned a checkout total of $24/mo due to regional taxes. Nothing was charged."
                       : run?.receipt?.halt_reason || "Check parameter constraints failed limit compliance check."
                     }
                   </p>
-                  <div className="flex gap-2.5 mt-4">
+                  <div className="flex gap-3 mt-4">
                     <button 
                       onClick={dataSource === 'mock' ? runMockRulesCheckSequence : () => pollRun(runId!)}
-                      className="font-grotesk text-[9px] font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#F5F5F0] px-4 py-2 transition-colors uppercase tracking-wider"
+                      className="font-grotesk text-xs md:text-sm font-bold text-[#0A0A0A] bg-[#FFD600] hover:bg-[#e6c200] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm"
                     >
                       {dataSource === 'mock' ? 'Retry' : 'Refresh'}
                     </button>
                     <button 
                       onClick={handleRestart}
-                      className="font-grotesk text-[9px] font-bold text-[#888888] hover:text-[#F5F5F0] border border-[#2D2D2D] px-4 py-2 transition-colors uppercase tracking-wider"
+                      className="font-grotesk text-xs md:text-sm font-bold text-[#D4D4D4] hover:text-[#FFFFFF] border-2 border-[#333333] px-5 py-2.5 transition-colors uppercase tracking-wider rounded-sm"
                     >
                       Restart Flow
                     </button>
@@ -1924,31 +1912,31 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex flex-col max-w-4xl mx-auto"
+              className="w-full max-w-[1280px] mx-auto flex flex-col py-4 md:py-6"
             >
-              <div className="flex items-center gap-2 mb-6">
-                <CheckCircle2 className="text-[#22c55e]" size={20} />
-                <h2 className="font-grotesk text-lg md:text-xl font-bold tracking-wide uppercase text-[#F5F5F0]">
+              <div className="flex items-center gap-3 mb-6">
+                <CheckCircle2 className="text-[#22c55e]" size={24} />
+                <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide uppercase text-[#F5F5F0]">
                   Session Completed Successfully
                 </h2>
               </div>
 
               {/* Single Scrollable Receipt container */}
-              <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-6 md:p-8 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
+              <div className="bg-[#0F0F0F] border-2 border-[#2D2D2D] rounded-lg p-6 md:p-8 flex flex-col gap-6 max-h-[75vh] overflow-y-auto shadow-xl">
                 {/* 1. Transaction Receipt */}
-                <div className="border-b border-[#2D2D2D] pb-5">
+                <div className="border-b-2 border-[#262626] pb-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="font-mono text-[9px] text-[#555] uppercase block mb-0.5">
+                      <span className="font-ibm-mono text-xs text-[#A3A3A3] uppercase block mb-1 font-bold">
                         Payment Gateway: Prava tokenized API
                       </span>
-                      <span className="font-grotesk text-base font-bold text-[#F5F5F0]">
+                      <span className="font-grotesk text-xl md:text-2xl font-bold text-[#F5F5F0]">
                         Infrastructure Purchase Receipt
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono text-[9px] text-[#555] uppercase block">Confirmation No</span>
-                      <span className="font-mono text-[11px] text-[#FFD600] font-bold">
+                      <span className="font-ibm-mono text-xs text-[#A3A3A3] uppercase block font-bold">Confirmation No</span>
+                      <span className="font-ibm-mono text-sm md:text-base text-[#FFD600] font-bold">
                         {dataSource === 'mock' 
                           ? "#PRV-849-0182" 
                           : run?.receipt?.confirmation_id || `#PRV-${runId?.toUpperCase()}`
@@ -1957,10 +1945,10 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-4 font-mono text-[11px] text-[#888888]">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 font-ibm-mono text-xs md:text-sm text-[#D4D4D4]">
                     <div>
-                      <span className="text-[#555] block uppercase text-[9px]">Purchased Resource</span>
-                      <span className="text-[#F5F5F0]">
+                      <span className="text-[#FFD600] block uppercase text-xs font-bold mb-1">Purchased Resource</span>
+                      <span className="text-[#F5F5F0] font-bold">
                         {dataSource === 'mock' 
                           ? (chosenProposalId === 'p-chosen' ? 'Railway Pro Plan' : 'Vercel Serverless Plan')
                           : `${run?.proposal?.recommended?.provider} ${run?.proposal?.recommended?.plan}`
@@ -1968,8 +1956,8 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#555] block uppercase text-[9px]">Transaction Date</span>
-                      <span className="text-[#F5F5F0]">
+                      <span className="text-[#FFD600] block uppercase text-xs font-bold mb-1">Transaction Date</span>
+                      <span className="text-[#F5F5F0] font-bold">
                         {dataSource === 'mock' 
                           ? new Date().toISOString().split('T')[0]
                           : run?.receipt?.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]
@@ -1977,11 +1965,11 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#555] block uppercase text-[9px]">Category Lock</span>
-                      <span className="text-[#F5F5F0]">{category}</span>
+                      <span className="text-[#FFD600] block uppercase text-xs font-bold mb-1">Category Lock</span>
+                      <span className="text-[#F5F5F0] font-bold">{category}</span>
                     </div>
                     <div>
-                      <span className="text-[#555] block uppercase text-[9px]">Billing Charge</span>
+                      <span className="text-[#FFD600] block uppercase text-xs font-bold mb-1">Billing Charge</span>
                       <span className="text-[#FFD600] font-bold">
                         {dataSource === 'mock' 
                           ? (chosenProposalId === 'p-chosen' ? '$20.00 /mo' : '$0.00 /mo')
