@@ -22,6 +22,36 @@ function headers(): Record<string, string> {
   };
 }
 
+/**
+ * fetch with a safety net for TRANSIENT faults only: network drops and 5xx
+ * responses (the sandbox occasionally returns a one-off 500 INTERNAL_ERROR).
+ *
+ * This does NOT violate the "no autonomous retry" rule — that rule forbids
+ * re-attempting a PURCHASE after a halt or decline. These retries are
+ * transport-level plumbing: a definitive answer from Prava (2xx/4xx) is
+ * always returned immediately on the first attempt; only "the wire glitched"
+ * is retried, and only a couple of times.
+ */
+async function fetchTransientSafe(
+  label: string,
+  url: string,
+  init: RequestInit,
+  { attempts = 3, backoffMs = 2000 }: { attempts?: number; backoffMs?: number } = {}
+): Promise<Response> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status < 500) return res; // success OR a definitive 4xx — a real answer
+      lastError = new Error(`${label} failed (${res.status}): ${await res.text()}`);
+    } catch (e) {
+      lastError = new Error(`${label} network error: ${(e as Error).message}`);
+    }
+    if (attempt < attempts) await new Promise((r) => setTimeout(r, backoffMs));
+  }
+  throw lastError ?? new Error(`${label} failed`);
+}
+
 export interface MerchantDetails {
   name: string;
   url: string;
@@ -55,7 +85,7 @@ export interface PravaSession {
 }
 
 export async function createSession(input: CreateSessionInput): Promise<PravaSession> {
-  const res = await fetch(`${BASE}/v1/sessions`, {
+  const res = await fetchTransientSafe("createSession", `${BASE}/v1/sessions`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -97,9 +127,13 @@ export async function pollPaymentResult(
   { maxAttempts = 240, intervalMs = 3000 }: { maxAttempts?: number; intervalMs?: number } = {}
 ): Promise<PaymentCredential> {
   for (let i = 0; i < maxAttempts; i++) {
-    const res = await fetch(`${BASE}/v1/sessions/${sessionId}/payment-result`, {
-      headers: headers(),
-    });
+    // Transient-safe: a single sandbox 500 mid-poll must not kill a payment
+    // the user is actively completing at the passkey screen.
+    const res = await fetchTransientSafe(
+      "payment-result",
+      `${BASE}/v1/sessions/${sessionId}/payment-result`,
+      { headers: headers() }
+    );
     if (!res.ok) throw new Error(`payment-result failed (${res.status}): ${await res.text()}`);
     const data = (await res.json()) as {
       status: "pending" | "completed" | "awaiting_result" | "failed";
@@ -155,7 +189,9 @@ export async function reportStatus(
   status: "APPROVED" | "DECLINED",
   authorizationCode?: string
 ): Promise<void> {
-  const res = await fetch(`${BASE}/v1/sessions/${sessionId}/report-status`, {
+  // Transient-safe: Prava REQUIRES this report — if it were dropped on a
+  // network blip, a payment that actually succeeded would look failed.
+  const res = await fetchTransientSafe("report-status", `${BASE}/v1/sessions/${sessionId}/report-status`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
