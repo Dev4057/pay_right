@@ -69,6 +69,20 @@ app.get("/api/catalog", (_req, res) => {
   res.json(loadCatalog());
 });
 
+// Radical transparency: serve the ACTUAL rules-layer source code, so the UI
+// can show users the exact deterministic gate that guards their money.
+let rulesSourceCache: string | null = null;
+app.get("/api/rules/source", (_req, res) => {
+  try {
+    if (!rulesSourceCache) {
+      rulesSourceCache = readFileSync(join(process.cwd(), "src", "core", "rules.ts"), "utf-8");
+    }
+    res.json({ file: "backend/src/core/rules.ts", source: rulesSourceCache });
+  } catch {
+    res.status(404).json({ error: "rules source not available in this build" });
+  }
+});
+
 app.get("/api/fixtures/report", (_req, res) => {
   res.json(JSON.parse(readFileSync(join(fixturesDir, "report.example.json"), "utf-8")));
 });

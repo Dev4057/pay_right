@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import GlitchText from "@/components/GlitchText";
 
 export default function FinalCTA() {
@@ -13,8 +14,8 @@ export default function FinalCTA() {
       </div>
 
       {/* Title */}
-      <h2 className="font-grotesk text-[44px] md:text-[80px] font-bold text-[#F5F5F0] tracking-[-2px] leading-none text-center w-full max-w-[1000px] whitespace-pre-line">
-        <GlitchText text={"STOP GUESSING.\nSTART DEPLOYING WITH EVIDENCE."} speed={40} delay={200} />
+      <h2 className="font-grotesk text-[clamp(36px,6vw,72px)] font-bold text-[#F5F5F0] tracking-[-2px] leading-[1.05] text-center w-full max-w-[1100px] mx-auto whitespace-pre-line">
+        <GlitchText text={"STOP GUESSING.\nSTART DEPLOYING\nWITH EVIDENCE."} speed={40} delay={200} />
       </h2>
 
       {/* Subtitle */}
@@ -24,14 +25,14 @@ export default function FinalCTA() {
 
       {/* CTAs */}
       <div className="flex items-center justify-center w-full sm:w-auto">
-        <a
+        <Link
           href="/dashboard"
           className="flex items-center justify-center w-full sm:w-[240px] h-[64px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors"
         >
           <span className="font-grotesk text-[13px] font-bold text-[#0A0A0A] tracking-[2px]">
             ANALYZE REPO
           </span>
-        </a>
+        </Link>
       </div>
     </section>
   );

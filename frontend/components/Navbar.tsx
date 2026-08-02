@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 const links = [
   { label: "ARCHITECTURE", section: "features" },
@@ -58,12 +59,13 @@ export default function Navbar() {
       <div className="flex items-center justify-between h-[60px] px-6 md:px-[48px] max-w-[1400px] mx-auto">
 
         {/* ── Logo ── */}
-        <a href="#" className="flex items-center gap-[10px] shrink-0 group">
-          <span className="w-[10px] h-[10px] bg-[#FFD600] group-hover:scale-110 transition-transform" />
+        <Link href="/" className="flex items-center gap-[10px] shrink-0 group">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="Pay Right" className="w-[28px] h-[28px] rounded-sm group-hover:scale-105 transition-transform" />
           <span className="font-grotesk text-[13px] font-bold text-[#F5F5F0] tracking-[2.5px]">
             PAY RIGHT
           </span>
-        </a>
+        </Link>
 
         {/* ── Desktop nav ── */}
         <nav className="hidden md:flex items-center gap-[36px]">
@@ -94,18 +96,18 @@ export default function Navbar() {
 
         {/* ── Desktop CTA ── */}
         <div className="hidden md:flex items-center gap-[14px]">
-          <a
-            href="#"
+          <Link
+            href="/login"
             className="font-ibm-mono text-[10px] text-[#555] tracking-[1.5px] hover:text-[#F5F5F0] transition-colors"
           >
             LOG IN
-          </a>
-          <a
+          </Link>
+          <Link
             href="/dashboard"
             className="font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] tracking-[1.5px] px-[18px] py-[9px] hover:bg-[#F5F5F0] transition-colors"
           >
             ANALYZE REPO
-          </a>
+          </Link>
         </div>
 
         {/* ── Mobile burger ── */}
@@ -158,13 +160,13 @@ export default function Navbar() {
             );
           })}
           <div className="flex flex-col gap-[10px] pt-5">
-            <a href="#" className="font-ibm-mono text-[12px] text-[#555] tracking-[1.5px]">LOG IN</a>
-            <a
+            <Link href="/login" className="font-ibm-mono text-[12px] text-[#555] tracking-[1.5px]">LOG IN</Link>
+            <Link
               href="/dashboard"
               className="font-grotesk text-[11px] font-bold text-[#0A0A0A] bg-[#FFD600] tracking-[1.5px] px-[18px] py-[11px] text-center hover:bg-[#F5F5F0] transition-colors"
             >
               ANALYZE REPO
-            </a>
+            </Link>
           </div>
         </nav>
       </div>

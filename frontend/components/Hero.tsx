@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import GlitchText from "@/components/GlitchText";
 
 export default function Hero() {
@@ -33,20 +34,20 @@ export default function Hero() {
 
       {/* Subheading */}
       <p className="font-ibm-mono text-[13px] md:text-[15px] text-[#888888] tracking-[1px] leading-[1.6] text-center w-full max-w-[800px]">
-        READ THE CODE. FIND THE TRUE REQUIREMENTS.
+        OUR AGENT READS YOUR CODE, FINDS WHAT IT REALLY NEEDS,
         <br />
-        BUY THE EXACT PLAN VIA PRAVA.
+        BUYS THE RIGHT PLAN VIA PRAVA — AND DEPLOYS YOUR APP ON IT.
       </p>
 
       <div className="h-10 md:h-[48px]" />
 
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-[16px] w-full sm:w-auto">
-        <a href="/dashboard" className="flex items-center justify-center w-full sm:w-[220px] h-[56px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors">
+        <Link href="/dashboard" className="flex items-center justify-center w-full sm:w-[220px] h-[56px] bg-[#FFD600] hover:bg-[#e6c200] transition-colors">
           <span className="font-grotesk text-[12px] font-bold text-[#0A0A0A] tracking-[2px]">
             ANALYZE REPO
           </span>
-        </a>
+        </Link>
         <button
           onClick={() => {
             const el = document.getElementById("process");
@@ -63,7 +64,7 @@ export default function Hero() {
       <div className="h-6 md:h-[24px]" />
 
       <p className="font-ibm-mono text-[11px] text-[#555555] tracking-[2px] text-center">
-        TOKENIZED VISA // DETERMINISTIC LIMITS // 100% TRACEABLE
+        ONE-TIME VISA TOKENS // HARD SPEND LIMITS // EVERY DOLLAR TRACEABLE
       </p>
     </section>
   );

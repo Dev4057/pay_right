@@ -14,6 +14,7 @@ const faqs = [
   { question: "DOES THE AI HAVE ACCESS TO MY CREDIT CARD?", answer: "NO. YOUR REAL CARD DETAILS ARE STORED SECURELY IN PRAVA. THE AGENT ONLY RECEIVES A DYNAMIC TOKEN FOR A SINGLE TRANSACTION." },
   { question: "HOW DOES IT KNOW WHAT MY CODE NEEDS?", answer: "THE ANALYZER AGENT READS YOUR DEPENDENCIES, CONFIGURATIONS, AND ARCHITECTURE PATTERNS TO DERIVE EXACT REQUIREMENTS LIKE DATABASES, QUEUES, AND COMPUTE." },
   { question: "CAN I REVIEW THE DECISION BEFORE PURCHASE?", answer: "YES. IN APPROVAL MODE, YOU GET A FULL PROPOSAL EXPLAINING THE REASONING BEHIND THE CHOSEN PLAN BEFORE ANY MONEY IS SPENT." },
+  { question: "DOES IT DEPLOY MY APP TOO?", answer: "YES. AFTER THE PURCHASE, A DEPLOYER AGENT PLANS THE DEPLOYMENT FROM THE SAME EVIDENCE, PUTS YOUR APP LIVE, AND EMAILS YOU THE RECEIPT WITH A STEP-BY-STEP DEPLOYMENT GUIDE." },
 ];
 
 export default function FAQ() {
@@ -76,9 +77,14 @@ export default function FAQ() {
         <span className="font-ibm-mono text-[13px] text-[#555555] tracking-[1px]">
           STILL HAVE QUESTIONS?
         </span>
-        <span className="font-ibm-mono text-[13px] font-bold text-[#FFD600] tracking-[1px] cursor-pointer hover:underline">
+        <a
+          href="https://github.com/Dev4057/pay_right"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-ibm-mono text-[13px] font-bold text-[#FFD600] tracking-[1px] cursor-pointer hover:underline"
+        >
           TALK TO A HUMAN &gt;
-        </span>
+        </a>
       </div>
     </section>
   );

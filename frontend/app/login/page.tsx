@@ -42,8 +42,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-4">
       {/* Brand */}
-      <div className="flex items-center gap-2 mb-8">
-        <span className="w-3 h-3 rounded-full bg-[#FFD600]" />
+      <div className="flex items-center gap-2.5 mb-8">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Pay Right" className="w-8 h-8 rounded-sm" />
         <span className="font-grotesk font-bold tracking-[2px] text-[#F5F5F0] uppercase">
           Pay Right
         </span>
@@ -55,12 +56,12 @@ export default function LoginPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-8"
+        className="w-full max-w-lg bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-8 md:p-10 shadow-[0_0_60px_rgba(255,214,0,0.05)]"
       >
-        <h1 className="font-grotesk text-xl font-bold tracking-wide uppercase text-[#F5F5F0] mb-1">
+        <h1 className="font-grotesk text-2xl font-bold tracking-wide uppercase text-[#F5F5F0] mb-1.5">
           Sign in
         </h1>
-        <p className="font-mono text-[11px] text-[#888888] mb-7 leading-relaxed">
+        <p className="font-mono text-[12px] text-[#999999] mb-8 leading-relaxed">
           Access the Infra Fit Agent — analyze your codebase, review proposals, and
           authorize purchases within your wallet limits.
         </p>

@@ -1,11 +1,11 @@
 import SectionHeader from "./SectionHeader";
 
 const rows = [
-  { feature: "DECIDES BEFORE PURCHASE", us: "[✓]", vantage: "[—]", terraform: "[—]", advisors: "[—]" },
-  { feature: "DERIVES PLAN FROM CODE", us: "[✓]", vantage: "[—]", terraform: "[—]", advisors: "[—]" },
-  { feature: "COMPLETES THE PURCHASE", us: "[✓]", vantage: "[—]", terraform: "[✓]", advisors: "[—]" },
-  { feature: "HUMAN-DESIGNED PLAN NEEDED", us: "[—]", vantage: "[—]", terraform: "[✓]", advisors: "[—]" },
-  { feature: "STOPS AT RECOMMENDATION", us: "[—]", vantage: "[✓]", terraform: "[—]", advisors: "[✓]" },
+  { feature: "WORKS BEFORE YOU DEPLOY", us: "[✓]", vantage: "[—]", terraform: "[—]", advisors: "[—]" },
+  { feature: "READS YOUR CODE TO PICK THE PLAN", us: "[✓]", vantage: "[—]", terraform: "[—]", advisors: "[—]" },
+  { feature: "ACTUALLY BUYS IT FOR YOU", us: "[✓]", vantage: "[—]", terraform: "[✓]", advisors: "[—]" },
+  { feature: "NEEDS A HUMAN TO WRITE THE PLAN", us: "[—]", vantage: "[—]", terraform: "[✓]", advisors: "[—]" },
+  { feature: "ONLY GIVES ADVICE, NEVER ACTS", us: "[—]", vantage: "[✓]", terraform: "[—]", advisors: "[✓]" },
 ];
 
 function cellStyle(val: string) {

@@ -1,8 +1,8 @@
 const stats = [
-  { value: "2", label: "AGENTS, ONE RULES LAYER", border: true },
-  { value: "4", label: "DETERMINISTIC SAFETY CHECKS", border: true },
-  { value: "100%", label: "TRACEABLE TO CODE EVIDENCE", border: true },
-  { value: "0", label: "LLM CALLS IN PAYMENT PATH", border: false },
+  { value: "4", label: "AI AGENTS IN THE PIPELINE", border: true },
+  { value: "4", label: "SAFETY CHECKS ON EVERY PURCHASE", border: true },
+  { value: "100%", label: "TRACEABLE TO YOUR OWN CODE", border: true },
+  { value: "0", label: "AI CALLS WHEN MONEY MOVES", border: false },
 ];
 
 export default function Stats() {

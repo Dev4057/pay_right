@@ -51,15 +51,15 @@ export default function Features() {
     >
       <SectionHeader
         label="[01] // ARCHITECTURE"
-        title={"TWO AGENTS.\nONE RULES LAYER."}
-        subtitle="DETERMINISTIC SPEND LIMITS. AI FOR REASONING, CODE FOR ENFORCING."
+        title={"AGENTS REASON.\nRULES ENFORCE."}
+        subtitle="THE AI DOES THE THINKING. PLAIN CODE CONTROLS THE MONEY — AND THE AI CAN NEVER OVERRIDE IT."
       />
 
       <div className="flex flex-col md:flex-row w-full gap-[2px]">
         <FeatureCard
           iconColor="#FFD600"
           title={"ANALYZER\nAGENT"}
-          description="READS THE CODEBASE. OUTPUTS WHAT THE CODE PROVES IT NEEDS (FACTS, NOT GUESSES)."
+          description="READS YOUR CODE FILE BY FILE. REPORTS WHAT IT PROVES YOUR APP NEEDS — WITH FILE AND LINE AS EVIDENCE."
           tag="REASONING"
           tagColor="#FFD600"
           borderColor="#FFD600"
@@ -76,7 +76,7 @@ export default function Features() {
         <FeatureCard
           iconColor="#F5F5F0"
           title={"RULES\nLAYER"}
-          description="FIXED DETERMINISTIC CODE. ENFORCES SPEND CEILINGS AND CATEGORY LOCKS. NO HALLUCINATIONS."
+          description="PLAIN CODE, NO AI. BLOCKS OVERSPENDING, WRONG PRICES, AND WRONG CATEGORIES — EVERY TIME, NO EXCEPTIONS."
           tag="SAFETY"
           tagColor="#888888"
           borderColor="#555555"
