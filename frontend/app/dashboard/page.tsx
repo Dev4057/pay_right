@@ -934,18 +934,18 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-[1000px] mx-auto flex flex-col py-6"
+              className="w-full max-w-[1280px] mx-auto flex flex-col py-4"
             >
-              <h2 className="font-grotesk text-xl md:text-2xl font-bold tracking-wide mb-2 uppercase">
+              <h2 className="font-grotesk text-2xl md:text-3xl font-bold tracking-wide mb-2 uppercase">
                 Who approves the purchase?
               </h2>
-              <p className="text-xs md:text-sm text-[#888888] mb-8 font-mono leading-relaxed">
+              <p className="text-xs md:text-sm text-[#888888] mb-8 font-ibm-mono leading-relaxed">
                 The agent scans your repo, asks a few questions, and picks the cheapest hosting
                 plan that truly fits. Before any money moves, choose who gives the final go-ahead.
               </p>
 
               {/* Mode Cards */}
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Approval Mode */}
                 <div
                   onClick={() => setMode('approval')}
@@ -1028,7 +1028,7 @@ export default function Dashboard() {
               </div>
 
               {/* Guardrails — the limits that hold in BOTH modes */}
-              <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-6 mb-8 flex flex-col gap-6">
+              <div className="bg-[#0F0F0F] border border-[#2D2D2D] rounded-lg p-8 mb-8 flex flex-col gap-6">
                 <div className="font-grotesk text-[11px] font-bold tracking-wider text-[#F5F5F0] uppercase flex items-center gap-2 -mb-2">
                   <Shield size={13} className="text-[#FFD600]" />
                   Guardrails — enforced by code in both modes
