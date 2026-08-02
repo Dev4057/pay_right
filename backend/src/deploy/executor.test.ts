@@ -99,6 +99,36 @@ test("checkDeploySpec rejects invented secrets and phantom findings", () => {
   );
 });
 
+test("checkDeploySpec rejects a start_command whose npm script does not exist", () => {
+  // The exact failure the HandShake rehearsal exposed: "npm start" against a
+  // package.json with no "start" script.
+  const pkg = JSON.stringify({ scripts: { server: "tsx src/server.ts", web: "vite" } });
+  const violations = checkDeploySpec({ ...spec, start_command: "npm start" }, report, pkg);
+  assert.ok(
+    violations.some((v) => v.includes('"start"') && v.includes("server")),
+    "missing start script must be caught and the available scripts listed"
+  );
+  // The correct command passes.
+  const ok = checkDeploySpec({ ...spec, start_command: "npm run server" }, report, pkg);
+  assert.ok(!ok.some((v) => v.includes("start_command")), "existing script must be accepted");
+});
+
+test("checkDeploySpec requires running the build script when one exists (Next.js apps)", () => {
+  const pkg = JSON.stringify({ scripts: { build: "next build", start: "next start" } });
+  const missing = checkDeploySpec(
+    { ...spec, build_command: "npm install", start_command: "npm start" },
+    report,
+    pkg
+  );
+  assert.ok(missing.some((v) => v.includes('"build"')), "unbuilt Next.js app must be caught");
+  const ok = checkDeploySpec(
+    { ...spec, build_command: "npm install --include=dev && npm run build", start_command: "npm start" },
+    report,
+    pkg
+  );
+  assert.equal(ok.filter((v) => v.includes("build")).length, 0, "install+build must pass");
+});
+
 test("checkDeploySpec ties needs_postgres to the report's database finding", () => {
   const flipped: DeploySpec = { ...spec, needs_postgres: !spec.needs_postgres, env_vars: [] };
   const violations = checkDeploySpec(flipped, report);

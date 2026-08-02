@@ -2105,7 +2105,9 @@ export default function Dashboard() {
                           ) : (
                             <><ShieldAlert size={11} className="text-[#FF6B35]" /><span className="text-[#FF6B35]">{run.deploy.status}</span></>
                           )}
-                          <span className="text-[#555] ml-auto">mode: {run.deploy.mode}</span>
+                          {run.deploy.mode === 'dry-run' && (
+                            <span className="text-[#555] ml-auto">mode: dry-run</span>
+                          )}
                         </div>
                         <div className="flex flex-col gap-1.5 max-h-[240px] overflow-y-auto font-mono text-[10px] text-[#c9c9c4] leading-relaxed">
                           {run.deploy.steps.map((s: string, i: number) => (

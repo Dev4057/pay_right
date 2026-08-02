@@ -32,9 +32,13 @@ how to deploy THIS repository on Render (the deploy rail), as a DeploySpec.
 
 GROUND EVERY FIELD IN THE REPORT — never invent facts about the code:
 - runtime: from the report's runtime finding (e.g. "node-20" -> "node").
-- build_command / start_command: infer from the runtime and evidence (package.json scripts seen
-  in evidence, entry files named in findings). Node default: build "npm install", start "npm start" —
-  but prefer what the evidence actually shows (e.g. "node server.js").
+- build_command / start_command: when the repository's ACTUAL package.json is provided below,
+  it is ground truth — pick the script that starts the SERVER (e.g. "npm run server", "npm start").
+  NEVER use "npm start" unless a "start" script actually exists.
+  If package.json has a "build" script (next build, vite build, tsc...), build_command MUST
+  install AND build: "npm install --include=dev && npm run build".
+  If the start script runs a devDependency tool (tsx, ts-node...), install with --include=dev.
+  Without a package.json, infer from the findings' evidence.
 - needs_postgres: true ONLY if the report's database finding says postgres.
 - env_vars:
   * If needs_postgres: include DATABASE_URL with source "postgres-connection" and value "".
@@ -69,8 +73,37 @@ const TOOLS: ChatCompletionTool[] = [
 ];
 
 /** Deterministic sanity rules on top of the schema — violations, or []. */
-export function checkDeploySpec(spec: DeploySpec, report: RequirementsReport): string[] {
+export function checkDeploySpec(
+  spec: DeploySpec,
+  report: RequirementsReport,
+  packageJsonRaw?: string
+): string[] {
   const violations: string[] = [];
+
+  // With the real package.json in hand, an npm start_command MUST reference a
+  // script that actually exists — "npm start" against a repo with no start
+  // script is exactly the failure this check exists to prevent.
+  if (packageJsonRaw) {
+    try {
+      const scripts = (JSON.parse(packageJsonRaw).scripts ?? {}) as Record<string, string>;
+      const m = /^npm\s+(?:run\s+)?([\w:-]+)/.exec(spec.start_command.trim());
+      if (m && !scripts[m[1]!]) {
+        violations.push(
+          `start_command "${spec.start_command}" references npm script "${m[1]}" which does not exist ` +
+            `in package.json (available scripts: ${Object.keys(scripts).join(", ") || "none"})`
+        );
+      }
+      // A repo WITH a build script (Next.js, Vite, tsc...) cannot start unbuilt.
+      if (scripts["build"] && !/\bbuild\b/.test(spec.build_command)) {
+        violations.push(
+          `package.json has a "build" script but build_command "${spec.build_command}" never runs it — ` +
+            `use "npm install --include=dev && npm run build"`
+        );
+      }
+    } catch {
+      /* unparseable package.json — skip script validation */
+    }
+  }
 
   const citations = deployCitationsExist(spec, report);
   if (!citations.ok) {
@@ -102,12 +135,12 @@ export function checkDeploySpec(spec: DeploySpec, report: RequirementsReport): s
 export async function planDeploy(
   report: RequirementsReport,
   repoName: string,
-  onProgress?: (line: string) => void
+  opts: { packageJson?: string; onProgress?: (line: string) => void } = {}
 ): Promise<DeployPlanResult> {
   const openai = makeClient();
   const log = (msg: string) => {
     agentLog("deployer", repoName, msg);
-    onProgress?.(msg);
+    opts.onProgress?.(msg);
   };
   log(`planning deployment of ${repoName} from the requirements report`);
 
@@ -118,6 +151,9 @@ export async function planDeploy(
       content:
         `Repository: ${repoName}\n\n` +
         `REQUIREMENTS REPORT:\n${JSON.stringify(report, null, 2)}\n\n` +
+        (opts.packageJson
+          ? `THE REPOSITORY'S ACTUAL package.json (ground truth for scripts):\n${opts.packageJson}\n\n`
+          : `(package.json was not available — infer commands from the findings' evidence)\n\n`) +
         `Produce the DeploySpec.`,
     },
   ];
@@ -146,7 +182,7 @@ export async function planDeploy(
     try {
       const { spec: raw } = JSON.parse(call.function.arguments || "{}") as { spec: unknown };
       const spec = validateDeploySpec(raw);
-      const violations = checkDeploySpec(spec, report);
+      const violations = checkDeploySpec(spec, report, opts.packageJson);
       if (violations.length === 0) {
         log(`deploy spec ready: ${spec.runtime}, build "${spec.build_command}", start "${spec.start_command}"${spec.needs_postgres ? ", + postgres" : ""}`);
         return { spec, iterations: iteration };

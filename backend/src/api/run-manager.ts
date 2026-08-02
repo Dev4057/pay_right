@@ -440,6 +440,18 @@ export function submitAnswers(
  * not be off, and no deploy may already be in flight. Re-triggering after a
  * terminal outcome IS allowed — dry-run first, live on demo day.
  */
+/** The repo's real package.json (raw GitHub) — ground truth for deploy commands. */
+async function fetchRepoPackageJson(repoUrl: string): Promise<string | null> {
+  const m = /github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i.exec(repoUrl.trim());
+  if (!m) return null;
+  try {
+    const res = await fetch(`https://raw.githubusercontent.com/${m[1]}/${m[2]}/HEAD/package.json`);
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
+  }
+}
+
 export function startDeploy(id: string): { ok: true } | { ok: false; error: string; status: number } {
   const run = runs.get(id);
   if (!run) return { ok: false, error: "run not found", status: 404 };
@@ -456,6 +468,11 @@ export function startDeploy(id: string): { ok: true } | { ok: false; error: stri
   if (run.deploy && (run.deploy.status === "planning" || run.deploy.status === "deploying")) {
     return { ok: false, error: "a deploy is already in progress for this run", status: 409 };
   }
+  // A failed attempt invalidates the cached plan — re-plan from scratch so the
+  // agent can correct whatever the failure exposed (wrong start script etc.).
+  if (run.deploy?.status === "failed") {
+    run.deploy_spec = null;
+  }
 
   const deploy: DeployState = { status: "planning", mode, steps: [], service_url: null, error: null };
   run.deploy = deploy;
@@ -470,7 +487,16 @@ export function startDeploy(id: string): { ok: true } | { ok: false; error: stri
       if (!run.deploy_spec) {
         act(run, "deployer agent: planning the deployment from the requirements report");
         step("deployer agent: reading the requirements report...");
-        const { spec } = await planDeploy(run.report!, run.repo_name, (line) => step(line));
+        const packageJson = await fetchRepoPackageJson(run.repo_path);
+        step(
+          packageJson
+            ? "fetched the repo's package.json — commands grounded in its real scripts"
+            : "package.json not reachable — inferring commands from the findings"
+        );
+        const { spec } = await planDeploy(run.report!, run.repo_name, {
+          ...(packageJson ? { packageJson } : {}),
+          onProgress: (line) => step(line),
+        });
         run.deploy_spec = spec;
       } else {
         step("using the previously validated deploy spec");
